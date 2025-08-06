@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    
+    .container {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .header p {
+      margin: 8px 0 0 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      border: 1px solid #e9ecef;
+    }
+    
+    .section h3 {
+      margin: 0 0 16px 0;
+      color: #495057;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .file-selector {
+      margin-bottom: 16px;
+    }
+    
+    .file-selector label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #495057;
+      font-size: 14px;
+    }
+    
+    .file-selector select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      font-size: 14px;
+      background-color: white;
+      color: #495057;
+    }
+    
+    .file-selector select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+    
+    .options-toggle {
+      margin: 16px 0;
+      text-align: center;
+    }
+    
+    .toggle-btn {
+      background: none;
+      border: 1px solid #667eea;
+      color: #667eea;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    
+    .toggle-btn:hover {
+      background-color: #667eea;
+      color: white;
+    }
+    
+    .advanced-options {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      border: 1px solid #e9ecef;
+    }
+    
+    .option-group {
+      margin-bottom: 12px;
+    }
+    
+    .option-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #6c757d;
+      cursor: pointer;
+    }
+    
+    .option-group input[type="checkbox"] {
+      margin: 0;
+    }
+    
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #6c757d;
+      cursor: pointer;
+    }
+    
+    .compare-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin: 20px 0;
+    }
+    
+    .compare-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+    
+    .compare-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .progress {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      background-color: #e3f2fd;
+      border-radius: 6px;
+      border: 1px solid #bbdefb;
+      margin: 16px 0;
+    }
+    
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: #e0e0e0;
+      border-radius: 3px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #2196f3, #21cbf3);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 3px;
+    }
+    
+    .results {
+      display: none;
+    }
+    
+    .results-summary {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #dee2e6;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .summary-item {
+      text-align: center;
+      padding: 12px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #e9ecef;
+    }
+    
+    .summary-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #495057;
+      display: block;
+    }
+    
+    .summary-label {
+      font-size: 12px;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+    
+    .change-type-breakdown {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .change-type {
+      text-align: center;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    
+    .change-modified { background-color: #fff3cd; border: 1px solid #ffeaa7; }
+    .change-added { background-color: #d1edff; border: 1px solid #74b9ff; }
+    .change-deleted { background-color: #f8d7da; border: 1px solid #f5c6cb; }
+    
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    
+    .action-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid #667eea;
+      background: white;
+      color: #667eea;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+      background-color: #667eea;
+      color: white;
+    }
+    
+    .action-btn.primary {
+      background-color: #667eea;
+      color: white;
+    }
+    
+    .differences-container {
+      max-height: 400px;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      background: white;
+    }
+    
+    .difference-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f8f9fa;
+      font-size: 13px;
+    }
+    
+    .difference-item:last-child {
+      border-bottom: none;
+    }
+    
+    .difference-type {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-right: 8px;
+    }
+    
+    .type-modified { background-color: #fff3cd; color: #856404; }
+    .type-added { background-color: #d1edff; color: #004085; }
+    .type-deleted { background-color: #f8d7da; color: #721c24; }
+    
+    .difference-location {
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .difference-values {
+      margin-top: 4px;
+      font-family: 'Courier New', monospace;
+      background-color: #f8f9fa;
+      padding: 6px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    
+    .value-before {
+      color: #dc3545;
+      text-decoration: line-through;
+    }
+    
+    .value-after {
+      color: #28a745;
+      font-weight: 600;
+    }
+    
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #f5c6cb;
+      margin: 16px 0;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6c757d;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .file-info {
+      font-size: 11px;
+      color: #6c757d;
+      margin-top: 4px;
+    }
+    
+    .suggested-modules {
+      background: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+      border-radius: 6px;
+      padding: 16px;
+      margin: 16px 0;
+      border: 1px solid #bbdefb;
+    }
+    
+    .module-suggestion {
+      margin-bottom: 8px;
+    }
+    
+    .module-btn {
+      background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-right: 8px;
+      transition: transform 0.2s;
+    }
+    
+    .module-btn:hover {
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 File Comparison Tool</h1>
+      <p>Compare any two files and spot the differences</p>
+    </div>
+
+    <!-- File Selection Section -->
+    <div class="section">
+      <h3>📁 Select Files to Compare</h3>
+      
+      <div class="file-selector">
+        <label for="fileA">File A (Original):</label>
+        <select id="fileA" onchange="updateFileInfo('A')">
+          <option value="">Select a file...</option>
+        </select>
+        <div id="fileInfoA" class="file-info"></div>
+      </div>
+      
+      <div class="file-selector">
+        <label for="fileB">File B (Comparison):</label>
+        <select id="fileB" onchange="updateFileInfo('B')">
+          <option value="">Select a file...</option>
+        </select>
+        <div id="fileInfoB" class="file-info"></div>
+      </div>
+      
+      <!-- Advanced Options -->
+      <div class="options-toggle">
+        <button class="toggle-btn" onclick="toggleAdvancedOptions()">⚙️ Advanced Options</button>
+      </div>
+      
+      <div id="advancedOptions" class="advanced-options">
+        <div class="option-group">
+          <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #495057;">Comparison Mode:</h4>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="comparisonMode" value="positional" checked>
+              Positional (row by row)
+            </label>
+            <label>
+              <input type="radio" name="comparisonMode" value="key-based">
+              Key-based matching
+            </label>
+          </div>
+        </div>
+        
+        <div id="keyColumnGroup" class="option-group" style="display: none;">
+          <label for="keyColumn">Primary Key Column:</label>
+          <select id="keyColumn">
+            <option value="">Select key column...</option>
+          </select>
+        </div>
+        
+        <div class="option-group">
+          <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #495057;">Sensitivity Options:</h4>
+          <label>
+            <input type="checkbox" id="ignoreCase">
+            Ignore case differences
+          </label>
+          <label>
+            <input type="checkbox" id="ignoreWhitespace" checked>
+            Ignore whitespace differences
+          </label>
+          <label>
+            <input type="checkbox" id="ignoreColumnOrder">
+            Ignore column order
+          </label>
+        </div>
+        
+        <div class="option-group">
+          <label for="maxDifferences">Maximum differences to find:</label>
+          <select id="maxDifferences">
+            <option value="1000">1,000</option>
+            <option value="5000" selected>5,000</option>
+            <option value="10000">10,000</option>
+            <option value="50000">50,000</option>
+            <option value="-1">No limit</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compare Button -->
+    <button id="compareBtn" class="compare-btn" onclick="runComparison()" disabled>
+      🔍 Compare Files
+    </button>
+
+    <!-- Progress Section -->
+    <div id="progress" class="progress">
+      <div class="spinner"></div>
+      <div id="progressMessage">Initializing comparison...</div>
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="results section">
+      <h3>📊 Comparison Results</h3>
+      
+      <div id="resultsSummary" class="results-summary">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span id="totalDifferences" class="summary-value">0</span>
+            <div class="summary-label">Total Changes</div>
+          </div>
+          <div class="summary-item">
+            <span id="identicalCells" class="summary-value">0</span>
+            <div class="summary-label">Identical Cells</div>
+          </div>
+          <div class="summary-item">
+            <span id="modifiedCells" class="summary-value">0</span>
+            <div class="summary-label">Modified</div>
+          </div>
+          <div class="summary-item">
+            <span id="structuralChanges" class="summary-value">0</span>
+            <div class="summary-label">Structural</div>
+          </div>
+        </div>
+        
+        <div id="changeBreakdown" class="change-type-breakdown">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      
+      <!-- Suggested Analysis Modules -->
+      <div id="suggestedModules" class="suggested-modules" style="display: none;">
+        <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #495057;">🧠 Smart Analysis Available:</h4>
+        <div id="modulesList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+      
+      <!-- Action Buttons -->
+      <div class="actions">
+        <button class="action-btn" onclick="showAllDifferences()">📋 View All Changes</button>
+        <button class="action-btn" onclick="exportResults()">📁 Export Report</button>
+        <button class="action-btn primary" onclick="newComparison()">🔄 New Comparison</button>
+      </div>
+      
+      <!-- Differences Container -->
+      <div id="differencesContainer" class="differences-container" style="display: none;">
+        <div id="differencesList">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Section -->
+    <div id="error" class="error" style="display: none;"></div>
+  </div>
+
+  <script>
+    let availableFiles = [];
+    let comparisonResults = null;
+    let currentProgress = null;
+
+    // Initialize dashboard
+    window.onload = function() {
+      loadAvailableFiles();
+      setupEventListeners();
+    };
+
+    function setupEventListeners() {
+      // Comparison mode change
+      document.querySelectorAll('input[name="comparisonMode"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+          const keyColumnGroup = document.getElementById('keyColumnGroup');
+          if (this.value === 'key-based') {
+            keyColumnGroup.style.display = 'block';
+            updateKeyColumnOptions();
+          } else {
+            keyColumnGroup.style.display = 'none';
+          }
+        });
+      });
+
+      // File selection validation
+      document.getElementById('fileA').addEventListener('change', validateFileSelection);
+      document.getElementById('fileB').addEventListener('change', validateFileSelection);
+    }
+
+    function loadAvailableFiles() {
+      showLoading('Loading available files...');
+      
+      google.script.run
+        .withSuccessHandler(function(files) {
+          availableFiles = files;
+          populateFileSelectors();
+          hideLoading();
+        })
+        .withFailureHandler(function(error) {
+          showError('Failed to load available files: ' + error.message);
+          hideLoading();
+        })
+        .getAvailableFiles();
+    }
+
+    function populateFileSelectors() {
+      const fileASelect = document.getElementById('fileA');
+      const fileBSelect = document.getElementById('fileB');
+      
+      // Clear existing options
+      fileASelect.innerHTML = '<option value="">Select a file...</option>';
+      fileBSelect.innerHTML = '<option value="">Select a file...</option>';
+      
+      // Group files by folder
+      const filesByFolder = {};
+      availableFiles.forEach(file => {
+        if (!filesByFolder[file.folder]) {
+          filesByFolder[file.folder] = [];
+        }
+        filesByFolder[file.folder].push(file);
+      });
+      
+      // Populate selectors with grouped options
+      Object.keys(filesByFolder).forEach(folder => {
+        const optgroupA = document.createElement('optgroup');
+        const optgroupB = document.createElement('optgroup');
+        optgroupA.label = folder;
+        optgroupB.label = folder;
+        
+        filesByFolder[folder].forEach(file => {
+          const optionA = document.createElement('option');
+          const optionB = document.createElement('option');
+          
+          optionA.value = file.id;
+          optionA.textContent = `${file.name} (${file.type})`;
+          optionA.dataset.fileInfo = JSON.stringify(file);
+          
+          optionB.value = file.id;
+          optionB.textContent = `${file.name} (${file.type})`;
+          optionB.dataset.fileInfo = JSON.stringify(file);
+          
+          optgroupA.appendChild(optionA);
+          optgroupB.appendChild(optionB);
+        });
+        
+        fileASelect.appendChild(optgroupA);
+        fileBSelect.appendChild(optgroupB);
+      });
+    }
+
+    function updateFileInfo(fileType) {
+      const select = document.getElementById('file' + fileType);
+      const infoDiv = document.getElementById('fileInfo' + fileType);
+      
+      if (select.value) {
+        const option = select.querySelector(`option[value="${select.value}"]`);
+        if (option && option.dataset.fileInfo) {
+          const fileInfo = JSON.parse(option.dataset.fileInfo);
+          const modified = new Date(fileInfo.modified).toLocaleDateString();
+          const size = formatFileSize(fileInfo.size);
+          infoDiv.textContent = `Modified: ${modified} | Size: ${size} | Folder: ${fileInfo.folder}`;
+        }
+      } else {
+        infoDiv.textContent = '';
+      }
+      
+      validateFileSelection();
+      updateKeyColumnOptions();
+    }
+
+    function validateFileSelection() {
+      const fileA = document.getElementById('fileA').value;
+      const fileB = document.getElementById('fileB').value;
+      const compareBtn = document.getElementById('compareBtn');
+      
+      if (fileA && fileB && fileA !== fileB) {
+        compareBtn.disabled = false;
+        compareBtn.textContent = '🔍 Compare Files';
+      } else {
+        compareBtn.disabled = true;
+        if (fileA === fileB && fileA) {
+          compareBtn.textContent = '⚠️ Select different files';
+        } else {
+          compareBtn.textContent = '🔍 Compare Files';
+        }
+      }
+    }
+
+    function updateKeyColumnOptions() {
+      const keyColumnSelect = document.getElementById('keyColumn');
+      const fileA = document.getElementById('fileA').value;
+      const fileB = document.getElementById('fileB').value;
+      
+      keyColumnSelect.innerHTML = '<option value="">Select key column...</option>';
+      
+      if (fileA && fileB) {
+        // This would ideally load headers from the files
+        // For now, add common key column options
+        const commonKeys = [
+          { value: '0', text: 'Column A (1st column)' },
+          { value: '1', text: 'Column B (2nd column)' },
+          { value: '2', text: 'Column C (3rd column)' },
+          { value: '3', text: 'Column D (4th column)' }
+        ];
+        
+        commonKeys.forEach(key => {
+          const option = document.createElement('option');
+          option.value = key.value;
+          option.textContent = key.text;
+          keyColumnSelect.appendChild(option);
+        });
+      }
+    }
+
+    function toggleAdvancedOptions() {
+      const options = document.getElementById('advancedOptions');
+      const isVisible = options.style.display !== 'none';
+      options.style.display = isVisible ? 'none' : 'block';
+      
+      const btn = event.target;
+      btn.textContent = isVisible ? '⚙️ Advanced Options' : '⚙️ Hide Options';
+    }
+
+    function runComparison() {
+      const config = getComparisonConfig();
+      
+      if (!config.fileA || !config.fileB) {
+        showError('Please select both files to compare');
+        return;
+      }
+      
+      showProgress();
+      hideResults();
+      hideError();
+      
+      // Start progress polling
+      pollProgress();
+      
+      google.script.run
+        .withSuccessHandler(function(results) {
+          comparisonResults = results;
+          hideProgress();
+          displayResults(results);
+        })
+        .withFailureHandler(function(error) {
+          hideProgress();
+          showError('Comparison failed: ' + error.message);
+        })
+        .compareFiles(config);
+    }
+
+    function getComparisonConfig() {
+      const fileAId = document.getElementById('fileA').value;
+      const fileBId = document.getElementById('fileB').value;
+      
+      const fileA = availableFiles.find(f => f.id === fileAId);
+      const fileB = availableFiles.find(f => f.id === fileBId);
+      
+      const mode = document.querySelector('input[name="comparisonMode"]:checked').value;
+      
+      return {
+        fileA: fileA,
+        fileB: fileB,
+        mode: mode,
+        keyColumn: document.getElementById('keyColumn').value,
+        ignoreCase: document.getElementById('ignoreCase').checked,
+        ignoreWhitespace: document.getElementById('ignoreWhitespace').checked,
+        ignoreColumnOrder: document.getElementById('ignoreColumnOrder').checked,
+        maxDifferences: parseInt(document.getElementById('maxDifferences').value)
+      };
+    }
+
+    function displayResults(results) {
+      // Update summary
+      document.getElementById('totalDifferences').textContent = results.summary.totalDifferences.toLocaleString();
+      document.getElementById('identicalCells').textContent = results.summary.identicalCells.toLocaleString();
+      document.getElementById('modifiedCells').textContent = results.summary.modifiedCells.toLocaleString();
+      
+      const structuralChanges = results.summary.addedRows + results.summary.deletedRows + 
+                              results.summary.addedColumns + results.summary.deletedColumns;
+      document.getElementById('structuralChanges').textContent = structuralChanges.toLocaleString();
+      
+      // Update change breakdown
+      updateChangeBreakdown(results);
+      
+      // Show suggested modules if available
+      if (results.suggestedModules && results.suggestedModules.length > 0) {
+        displaySuggestedModules(results.suggestedModules);
+      }
+      
+      showResults();
+    }
+
+    function updateChangeBreakdown(results) {
+      const breakdown = document.getElementById('changeBreakdown');
+      breakdown.innerHTML = '';
+      
+      const changes = [
+        { type: 'Modified', count: results.summary.modifiedCells, class: 'change-modified' },
+        { type: 'Added Rows', count: results.summary.addedRows, class: 'change-added' },
+        { type: 'Deleted Rows', count: results.summary.deletedRows, class: 'change-deleted' }
+      ];
+      
+      changes.forEach(change => {
+        if (change.count > 0) {
+          const div = document.createElement('div');
+          div.className = `change-type ${change.class}`;
+          div.innerHTML = `<strong>${change.count}</strong><br>${change.type}`;
+          breakdown.appendChild(div);
+        }
+      });
+    }
+
+    function displaySuggestedModules(modules) {
+      const container = document.getElementById('suggestedModules');
+      const modulesList = document.getElementById('modulesList');
+      
+      modulesList.innerHTML = '';
+      
+      modules.forEach(module => {
+        const btn = document.createElement('button');
+        btn.className = 'module-btn';
+        btn.textContent = `💰 ${module.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`;
+        btn.onclick = () => runAnalysisModule(module);
+        modulesList.appendChild(btn);
+      });
+      
+      container.style.display = 'block';
+    }
+
+    function showAllDifferences() {
+      if (!comparisonResults || !comparisonResults.differences) {
+        showError('No comparison results available');
+        return;
+      }
+      
+      const container = document.getElementById('differencesContainer');
+      const list = document.getElementById('differencesList');
+      
+      list.innerHTML = '';
+      
+      const differences = comparisonResults.differences.slice(0, 100); // Show first 100
+      
+      differences.forEach(diff => {
+        const item = document.createElement('div');
+        item.className = 'difference-item';
+        
+        const typeClass = diff.type.replace('_', '-');
+        const typeName = diff.type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        
+        item.innerHTML = `
+          <span class="difference-type type-${typeClass}">${typeName}</span>
+          <span class="difference-location">${diff.description}</span>
+          <div class="difference-values">
+            ${diff.valueA !== null ? `<span class="value-before">Before: ${diff.valueA}</span><br>` : ''}
+            ${diff.valueB !== null ? `<span class="value-after">After: ${diff.valueB}</span>` : ''}
+          </div>
+        `;
+        
+        list.appendChild(item);
+      });
+      
+      if (comparisonResults.differences.length > 100) {
+        const moreItem = document.createElement('div');
+        moreItem.className = 'difference-item';
+        moreItem.style.textAlign = 'center';
+        moreItem.style.fontStyle = 'italic';
+        moreItem.style.color = '#6c757d';
+        moreItem.textContent = `... and ${comparisonResults.differences.length - 100} more differences. Export full report to see all.`;
+        list.appendChild(moreItem);
+      }
+      
+      container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function exportResults() {
+      if (!comparisonResults) {
+        showError('No comparison results to export');
+        return;
+      }
+      
+      showLoading('Exporting comparison results...');
+      
+      google.script.run
+        .withSuccessHandler(function(exportResult) {
+          hideLoading();
+          if (exportResult.success) {
+            showSuccess(`Report exported successfully: ${exportResult.fileName}`);
+          } else {
+            showError('Export failed: ' + exportResult.error);
+          }
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          showError('Export failed: ' + error.message);
+        })
+        .exportComparisonResults(comparisonResults, 'csv');
+    }
+
+    function runAnalysisModule(moduleName) {
+      showLoading(`Running ${moduleName} analysis...`);
+      
+      // This would call the appropriate analysis module
+      google.script.run
+        .withSuccessHandler(function(analysisResults) {
+          hideLoading();
+          displayAnalysisResults(analysisResults);
+        })
+        .withFailureHandler(function(error) {
+          hideLoading();
+          showError('Analysis failed: ' + error.message);
+        })
+        .runPayrollAnalysis(comparisonResults); // Example call
+    }
+
+    function newComparison() {
+      // Reset form
+      document.getElementById('fileA').value = '';
+      document.getElementById('fileB').value = '';
+      document.getElementById('fileInfoA').textContent = '';
+      document.getElementById('fileInfoB').textContent = '';
+      
+      hideResults();
+      hideError();
+      validateFileSelection();
+      
+      comparisonResults = null;
+    }
+
+    function pollProgress() {
+      // This would poll the server for progress updates
+      // Implementation depends on your progress tracking system
+    }
+
+    // Utility functions
+    function showProgress() {
+      document.getElementById('progress').style.display = 'block';
+    }
+
+    function hideProgress() {
+      document.getElementById('progress').style.display = 'none';
+    }
+
+    function showResults() {
+      document.getElementById('results').style.display = 'block';
+    }
+
+    function hideResults() {
+      document.getElementById('results').style.display = 'none';
+    }
+
+    function showError(message) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('error').style.display = 'none';
+    }
+
+    function showLoading(message) {
+      const progressDiv = document.getElementById('progress');
+      const messageDiv = document.getElementById('progressMessage');
+      messageDiv.textContent = message;
+      progressDiv.style.display = 'block';
+    }
+
+    function hideLoading() {
+      document.getElementById('progress').style.display = 'none';
+    }
+
+    function showSuccess(message) {
+      // Could implement a success notification
+      alert(message);
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+  </script>
+</body>
+</html>
