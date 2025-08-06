@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <title>Enhanced Maternity Management Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            position: relative;
+        }
+        
+        .dashboard-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .dashboard-header .subtitle {
+            margin: 5px 0 0 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        
+        .close-btn:hover {
+            opacity: 1;
+        }
+        
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-active .stat-value { color: #28a745; }
+        .stat-attention .stat-value { color: #ffc107; }
+        .stat-total .stat-value { color: #007bff; }
+        .stat-financial .stat-value { color: #17a2b8; }
+        .stat-errors .stat-value { color: #dc3545; }
+        
+        .system-health {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .health-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .health-healthy {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .health-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .health-error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .search-container {
+            padding: 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .search-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .cases-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .cases-table th {
+            background-color: #f8f9fa;
+            color: #495057;
+            font-weight: 600;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
+        }
+        
+        .cases-table td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        
+        .cases-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .employee-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .employee-name {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 4px;
+        }
+        
+        .employee-details {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .case-summary {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .status-active {
+            background-color: #28a745;
+        }
+        
+        .status-upcoming {
+            background-color: #17a2b8;
+        }
+        
+        .status-returning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .status-completed {
+            background-color: #6c757d;
+        }
+        
+        .status-overdue {
+            background-color: #dc3545;
+        }
+        
+        .status-error {
+            background-color: #dc3545;
+        }
+        
+        .financial-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .financial-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        
+        .financial-label {
+            color: #6c757d;
+        }
+        
+        .financial-amount {
+            font-weight: 600;
+        }
+        
+        .cmp-info {
+            background: #e8f4fd;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        
+        .empty-state .btn {
+            margin-top: 20px;
+            padding: 12px 24px;
+            font-size: 14px;
+        }
+        
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-select {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 12px;
+            background: white;
+        }
+        
+        .progress-indicator {
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            transition: width 0.3s;
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <button class="close-btn" onclick="google.script.host.close()" title="Close">&times;</button>
+            <h1>🤱 Enhanced Maternity Management</h1>
+            <div class="subtitle">Advanced dashboard with day-based CMP tracking and payroll integration</div>
+        </div>
+
+        <!-- Enhanced Statistics Section -->
+        <div class="dashboard-stats">
+            <? if (dashboardData && dashboardData.statistics) { ?>
+                <div class="stat-card stat-total">
+                    <div class="stat-value"><?= dashboardData.statistics.totalCases || 0 ?></div>
+                    <div class="stat-label">Total Cases</div>
+                </div>
+                <div class="stat-card stat-active">
+                    <div class="stat-value"><?= dashboardData.statistics.activeCases || 0 ?></div>
+                    <div class="stat-label">Active Cases</div>
+                </div>
+                <div class="stat-card stat-attention">
+                    <div class="stat-value"><?= dashboardData.statistics.casesNeedingAttention || 0 ?></div>
+                    <div class="stat-label">Need Attention</div>
+                </div>
+                <div class="stat-card stat-financial">
+                    <div class="stat-value">£<?= (dashboardData.statistics.totalRemainingPay || 0).toLocaleString() ?></div>
+                    <div class="stat-label">Remaining Pay</div>
+                </div>
+                <? if (dashboardData.statistics.casesWithErrors > 0) { ?>
+                <div class="stat-card stat-errors">
+                    <div class="stat-value"><?= dashboardData.statistics.casesWithErrors ?></div>
+                    <div class="stat-label">Data Errors</div>
+                </div>
+                <? } ?>
+            <? } ?>
+        </div>
+
+        <!-- Enhanced System Health Section -->
+        <? if (dashboardData && dashboardData.systemHealth) { ?>
+        <div class="system-health">
+            <div class="health-indicator">
+                <span>🔧 System Health:</span>
+                <? 
+                    var healthClass = 'health-healthy';
+                    var healthText = dashboardData.systemHealth.payrollIntegration || 'unknown';
+                    
+                    if (healthText === 'warning') {
+                        healthClass = 'health-warning';
+                    } else if (healthText === 'error') {
+                        healthClass = 'health-error';
+                    }
+                ?>
+                <span class="health-status <?= healthClass ?>"><?= healthText ?></span>
+                <span style="color: #6c757d; font-size: 12px;">
+                    Last checked: <?= new Date(dashboardData.systemHealth.lastChecked).toLocaleTimeString() ?>
+                </span>
+                <? if (dashboardData.systemHealth.issues && dashboardData.systemHealth.issues.length > 0) { ?>
+                    <span class="tooltip" data-tooltip="<?= dashboardData.systemHealth.issues.join('; ') ?>">ⓘ</span>
+                <? } ?>
+            </div>
+        </div>
+        <? } ?>
+
+        <!-- Enhanced Search and Filter Section -->
+        <div class="search-container">
+            <div class="filter-bar">
+                <input type="text" id="searchBox" class="search-box" placeholder="Search by employee name, location, or case ID...">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Statuses</option>
+                    <option value="onLeave">On Leave</option>
+                    <option value="upcoming">Upcoming</option>
+                    <option value="returning">Returning Soon</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="returned">Returned</option>
+                    <option value="error">Data Errors</option>
+                </select>
+                <select id="locationFilter" class="filter-select">
+                    <option value="">All Locations</option>
+                    <!-- Will be populated by JavaScript -->
+                </select>
+                <select id="payTypeFilter" class="filter-select">
+                    <option value="">All Pay Types</option>
+                    <option value="Salary">Salaried</option>
+                    <option value="Hourly">Hourly</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Enhanced Cases Table -->
+        <div style="overflow-x: auto;">
+            <table class="cases-table" id="casesTable">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Status & Dates</th>
+                        <th>Financial Summary</th>
+                        <th>Progress</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="casesTableBody">
+                    <? if (dashboardData && dashboardData.activeSummaries && dashboardData.activeSummaries.length > 0) { ?>
+                        <? dashboardData.activeSummaries.forEach(function(summary) { ?>
+                            <tr class="case-row" 
+                                data-employee-name="<?= (summary.employeeName || '').toLowerCase() ?>"
+                                data-location="<?= summary.employeeLocation || '' ?>"
+                                data-status="<?= summary.statusCategory || '' ?>"
+                                data-pay-type="<?= summary.employeePayType || '' ?>"
+                                data-case-id="<?= summary.caseId || '' ?>">
+                                
+                                <!-- Employee Information -->
+                                <td>
+                                    <div class="employee-info">
+                                        <div class="employee-name"><?= summary.employeeName || 'Unknown Employee' ?></div>
+                                        <div class="employee-details">
+                                            📍 <?= summary.employeeLocation || 'Unknown' ?> • 
+                                            💼 <?= summary.employeePayType || 'Unknown' ?>
+                                            <? if (summary.currentPayrollPeriod) { ?>
+                                                • Period: <?= summary.currentPayrollPeriod ?>
+                                            <? } ?>
+                                        </div>
+                                        <? if (summary.error) { ?>
+                                            <div class="case-summary" style="color: #dc3545;">
+                                                ⚠️ Error: <?= summary.error ?>
+                                            </div>
+                                        <? } else if (summary.maternityStartDate) { ?>
+                                            <div class="case-summary">
+                                                <? 
+                                                    try {
+                                                        var startDate = summary.maternityStartDate instanceof Date ? summary.maternityStartDate : new Date(summary.maternityStartDate);
+                                                        var formattedDate = Utilities.formatDate(startDate, Session.getScriptTimeZone(), 'dd/MM/yyyy');
+                                                ?>
+                                                🗓️ Started: <?= formattedDate ?>
+                                                <? } catch (e) { ?>
+                                                🗓️ Started: <?= summary.maternityStartDate ?>
+                                                <? } ?>
+                                            </div>
+                                        <? } ?>
+                                    </div>
+                                </td>
+
+                                <!-- Status & Dates -->
+                                <td>
+                                    <? 
+                                        var statusClass = 'status-active';
+                                        var statusText = summary.statusDescription || 'Unknown';
+                                        
+                                        if (summary.statusCategory === 'upcoming') {
+                                            statusClass = 'status-upcoming';
+                                        } else if (summary.statusCategory === 'returned') {
+                                            statusClass = 'status-completed';
+                                        } else if (summary.statusCategory === 'overdue') {
+                                            statusClass = 'status-overdue';
+                                        } else if (summary.statusCategory === 'returning') {
+                                            statusClass = 'status-returning';
+                                        } else if (summary.error) {
+                                            statusClass = 'status-error';
+                                            statusText = 'Data Error';
+                                        }
+                                    ?>
+                                    <span class="status-badge <?= statusClass ?>"><?= statusText ?></span>
+                                    
+                                    <? if (!summary.error && summary.currentPeriod) { ?>
+                                        <div class="case-summary">
+                                            📊 Current: <?= summary.currentPeriod.periodName || 'Unknown' ?>
+                                        </div>
+                                    <? } else if (!summary.error && summary.totalPeriods) { ?>
+                                        <div class="case-summary">
+                                            📋 <?= summary.periodsWithData || 0 ?>/<?= summary.totalPeriods ?> periods completed
+                                        </div>
+                                    <? } ?>
+                                </td>
+
+                                <!-- Enhanced Financial Summary -->
+                                <td>
+                                    <? if (!summary.error) { ?>
+                                        <div class="financial-info">
+                                            <div class="financial-row">
+                                                <span class="financial-label">SMP Total:</span>
+                                                <span class="financial-amount">£<?= (summary.totalSMP || 0).toLocaleString() ?></span>
+                                            </div>
+                                            <div class="financial-row">
+                                                <span class="financial-label">SMP Remaining:</span>
+                                                <span class="financial-amount">£<?= (summary.smpRemaining || 0).toLocaleString() ?></span>
+                                            </div>
+                                            <? if (summary.totalCMP && summary.totalCMP > 0) { ?>
+                                                <div class="cmp-info">
+                                                    <div class="financial-row">
+                                                        <span class="financial-label">CMP Total:</span>
+                                                        <span class="financial-amount">£<?= (summary.totalCMP || 0).toLocaleString() ?></span>
+                                                    </div>
+                                                    <div class="financial-row">
+                                                        <span class="financial-label">CMP Days:</span>
+                                                        <span class="financial-amount"><?= summary.cmpDaysUsed || 0 ?>/<?= summary.cmpDaysTotal || 56 ?></span>
+                                                    </div>
+                                                </div>
+                                            <? } ?>
+                                        </div>
+                                    <? } else { ?>
+                                        <span style="color: #dc3545; font-size: 12px;">Data Error</span>
+                                    <? } ?>
+                                </td>
+
+                                <!-- Enhanced Progress -->
+                                <td>
+                                    <? if (!summary.error && summary.totalPeriods > 0) { ?>
+                                        <? 
+                                            var progressPercentage = Math.round(((summary.periodsWithData || 0) / summary.totalPeriods) * 100);
+                                        ?>
+                                        <div style="font-size: 12px; margin-bottom: 4px;">
+                                            <?= progressPercentage ?>% Complete
+                                        </div>
+                                        <div class="progress-indicator">
+                                            <div class="progress-bar" style="width: <?= progressPercentage ?>%"></div>
+                                        </div>
+                                        <? if (summary.cmpCompletionPercentage !== undefined) { ?>
+                                            <div style="font-size: 11px; color: #6c757d; margin-top: 4px;">
+                                                CMP: <?= summary.cmpCompletionPercentage ?>%
+                                            </div>
+                                        <? } ?>
+                                    <? } else { ?>
+                                        <span style="color: #6c757d; font-size: 12px;">No data</span>
+                                    <? } ?>
+                                </td>
+
+                                <!-- Actions -->
+                                <td>
+                                    <? if (!summary.error) { ?>
+                                        <button class="btn btn-primary" onclick="viewCaseDetails('<?= summary.caseId ?>')">
+                                            📊 View Details
+                                        </button>
+                                        <? if (summary.statusCategory === 'overdue' || summary.statusCategory === 'returning') { ?>
+                                            <br><button class="btn btn-success" style="margin-top: 4px;" onclick="quickReturn('<?= summary.caseId ?>')">
+                                                ✅ Set Return
+                                            </button>
+                                        <? } ?>
+                                    <? } else { ?>
+                                        <span style="color: #dc3545; font-size: 12px;">Fix Data Error</span>
+                                    <? } ?>
+                                </td>
+                            </tr>
+                        <? }); ?>
+                    <? } else { ?>
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <h3>🌟 No Maternity Cases</h3>
+                                    <p>There are currently no maternity cases to display.</p>
+                                    <button class="btn btn-primary" onclick="createNewCase()">
+                                        ➕ Create First Case
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <? } ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced filtering and search functionality
+        let allCases = [];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Store all case rows for filtering
+            allCases = Array.from(document.querySelectorAll('.case-row'));
+            
+            // Populate location filter
+            populateLocationFilter();
+            
+            // Set up event listeners
+            document.getElementById('searchBox').addEventListener('input', filterCases);
+            document.getElementById('statusFilter').addEventListener('change', filterCases);
+            document.getElementById('locationFilter').addEventListener('change', filterCases);
+            document.getElementById('payTypeFilter').addEventListener('change', filterCases);
+        });
+        
+        function populateLocationFilter() {
+            const locations = new Set();
+            allCases.forEach(row => {
+                const location = row.getAttribute('data-location');
+                if (location) locations.add(location);
+            });
+            
+            const locationFilter = document.getElementById('locationFilter');
+            Array.from(locations).sort().forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationFilter.appendChild(option);
+            });
+        }
+        
+        function filterCases() {
+            const searchValue = document.getElementById('searchBox').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const locationFilter = document.getElementById('locationFilter').value;
+            const payTypeFilter = document.getElementById('payTypeFilter').value;
+            
+            allCases.forEach(row => {
+                const employeeName = row.getAttribute('data-employee-name') || '';
+                const location = row.getAttribute('data-location') || '';
+                const status = row.getAttribute('data-status') || '';
+                const payType = row.getAttribute('data-pay-type') || '';
+                const caseId = row.getAttribute('data-case-id') || '';
+                
+                const matchesSearch = !searchValue || 
+                    employeeName.includes(searchValue) ||
+                    location.toLowerCase().includes(searchValue) ||
+                    caseId.toLowerCase().includes(searchValue);
+                
+                const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesLocation = !locationFilter || location === locationFilter;
+                const matchesPayType = !payTypeFilter || payType === payTypeFilter;
+                
+                if (matchesSearch && matchesStatus && matchesLocation && matchesPayType) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update visible count
+            const visibleCases = allCases.filter(row => row.style.display !== 'none').length;
+            console.log(`Showing ${visibleCases} of ${allCases.length} cases`);
+        }
+        
+        function viewCaseDetails(caseId) {
+            // Close this modal and open the enhanced period view
+            google.script.run
+                .withSuccessHandler(function() {
+                    google.script.host.close();
+                })
+                .withFailureHandler(function(error) {
+                    alert('Error opening case details: ' + error.message);
+                })
+                .showMaternityPeriodView(caseId);
+        }
+        
+        function quickReturn(caseId) {
+            const returnDate = prompt('Enter return date (YYYY-MM-DD):');
+            if (returnDate) {
+                google.script.run
+                    .withSuccessHandler(function(result) {
+                        if (result.success) {
+                            alert('Return date set successfully');
+                            location.reload(); // Refresh the dashboard
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        alert('Error setting return date: ' + error.message);
+                    })
+                    .submitReturnDate(caseId, returnDate);
+            }
+        }
+        
+        function createNewCase() {
+            google.script.run
+                .withFailureHandler(function(error) {
+                    alert('Error opening new case form: ' + error.message);
+                })
+                .showNewMaternityCaseForm();
+        }
+        
+        // Enhanced keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'f':
+                        e.preventDefault();
+                        document.getElementById('searchBox').focus();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        createNewCase();
+                        break;
+                    case 'r':
+                        e.preventDefault();
+                        location.reload();
+                        break;
+                }
+            }
+        });
+        
+        // Auto-refresh every 5 minutes
+        setInterval(function() {
+            console.log('Auto-refreshing dashboard...');
+            location.reload();
+        }, 300000); // 5 minutes
+    </script>
+</body>
+</html>
