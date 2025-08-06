@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 20px; 
+      background: #f5f5f5; 
+    }
+    
+    .container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      background: white; 
+      border-radius: 8px; 
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+    }
+    
+    .header { 
+      background: #1a73e8; 
+      color: white; 
+      padding: 20px; 
+      text-align: center; 
+    }
+    
+    .header h1 { 
+      margin: 0; 
+      font-size: 24px; 
+    }
+    
+    .status-bar {
+      background: #f8f9fa;
+      padding: 15px 20px;
+      border-bottom: 1px solid #e0e0e0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .status-info {
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .status-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .button {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    
+    .button:hover { 
+      background: #1557b0; 
+    }
+    
+    .button:disabled {
+      background: #ccc !important;
+      color: #666 !important;
+      cursor: not-allowed;
+      opacity: 0.6;
+      box-shadow: none;
+    }
+    
+    .button:disabled:hover {
+      background: #ccc !important;
+      color: #666 !important;
+    }
+    
+    .button.success {
+      background: #34a853;
+    }
+    
+    .button.success:hover {
+      background: #2d7c3e;
+    }
+    
+    .button.warning {
+      background: #ea4335;
+    }
+    
+    .button.warning:hover {
+      background: #d23322;
+    }
+    
+    /* Tab System */
+    .tab-container {
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .tab-buttons {
+      display: flex;
+      background: #f1f3f4;
+      border-bottom: 2px solid #ddd;
+      overflow-x: auto;
+      flex-wrap: wrap;
+    }
+    
+    .tab-button {
+      padding: 10px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      min-width: 100px;
+      max-width: 120px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex: 1;
+    }
+    
+    .tab-button.active {
+      background: white;
+      border-bottom-color: #1a73e8;
+      color: #1a73e8;
+      font-weight: bold;
+    }
+    
+    .tab-button:hover {
+      background: #e8f0fe;
+    }
+    
+    .tab-status {
+      font-size: 8px;
+      padding: 1px 4px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    
+    .tab-status.pass {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .tab-status.warning {
+      background: #fff3cd;
+      color: #856404;
+    }
+    
+    .tab-status.fail {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .tab-status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    .tab-status.approved {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+    
+    .tab-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Check Result Display */
+    .check-result {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+    
+    .check-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .check-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .check-summary {
+      font-size: 14px;
+      color: #666;
+      margin: 10px 0;
+    }
+    
+    .check-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin: 15px 0;
+    }
+    
+    .stat-box {
+      background: white;
+      padding: 15px;
+      border-radius: 4px;
+      text-align: center;
+      border-left: 4px solid #ddd;
+    }
+    
+    .stat-box.pass {
+      border-left-color: #34a853;
+    }
+    
+    .stat-box.warning {
+      border-left-color: #fbbc04;
+    }
+    
+    .stat-box.fail {
+      border-left-color: #ea4335;
+    }
+    
+    .stat-box.error {
+      border-left-color: #ea4335;
+    }
+    
+    .stat-number {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    
+    /* Exceptions Table */
+    .exceptions-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    
+    .exceptions-table th,
+    .exceptions-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .exceptions-table th {
+      background: #f1f3f4;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .exception-row.critical {
+      background: #fef7f7;
+      border-left: 4px solid #ea4335;
+    }
+    
+    .exception-row.warning {
+      background: #fffef7;
+      border-left: 4px solid #fbbc04;
+    }
+    
+    .severity-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    
+    .severity-badge.critical {
+      background: #ea4335;
+      color: white;
+    }
+    
+    .severity-badge.warning {
+      background: #fbbc04;
+      color: #333;
+    }
+    
+    .exception-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    
+    .exception-controls label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .exception-controls input[type="checkbox"] {
+      margin: 0;
+    }
+    
+    /* Approval Section */
+    .approval-section {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 5px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .approval-section.approved {
+      border-color: #34a853;
+      background: #f0f9f0;
+    }
+    
+    .approval-section.pending {
+      border-color: #fbbc04;
+      background: #fffef7;
+    }
+    
+    /* Loading and Messages */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1a73e8;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 2s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .message.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    
+    .message.warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    /* Error Display */
+    .error-details {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 10px 0;
+    }
+    
+    .error-title {
+      font-weight: bold;
+      color: #721c24;
+      margin-bottom: 10px;
+    }
+    
+    .error-message {
+      color: #721c24;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    /* Caching Progress Styles */
+    .caching-controls {
+      text-align: center;
+      margin: 20px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #1a73e8;
+      transition: width 0.3s ease;
+    }
+
+    .stage-list {
+      text-align: left;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .stage-item {
+      display: flex;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .stage-icon {
+      margin-right: 10px;
+      font-size: 16px;
+    }
+
+    .stage-info {
+      flex: 1;
+    }
+
+    .stage-progress {
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 Pre-Payroll Validation System</h1>
+      <p>Validate payroll data before final processing</p>
+    </div>
+    
+    <div class="status-bar">
+      <div class="status-info" id="statusInfo">
+        Ready to run validation checks
+      </div>
+      <div class="status-actions">
+        <button class="button" onclick="runAllChecks()" id="runChecksBtn">🚀 Run All Checks</button>
+        <button class="button" onclick="resetSystem()">🔄 Reset</button>
+        <button class="button" onclick="debugCache()" title="Test the caching system">🧪 Debug Cache</button>
+        <button class="button success" id="generateReportsBtn" onclick="generateReports()" disabled title="Run and approve all checks first">
+          📊 Generate Reports (Run checks first)
+        </button>
+      </div>
+    </div>
+    
+    <div class="tab-container">
+      <div class="tab-buttons" id="tabButtons">
+        <button class="tab-button active" onclick="showTab('overview')">
+          📊 Overview
+        </button>
+        <!-- Dynamic tabs will be added here -->
+      </div>
+      
+      <!-- Overview Tab -->
+      <div id="overview" class="tab-content active">
+        <div class="loading" id="overviewLoading">
+          <div class="spinner"></div>
+          <p>Click "Run All Checks" to start validation</p>
+        </div>
+        <div id="overviewContent" style="display: none;">
+          <!-- Overview content will be populated here -->
+        </div>
+      </div>
+      
+      <!-- Dynamic check tabs will be added here -->
+    </div>
+  </div>
+
+  <script>
+    let currentResults = null;
+    let currentApprovals = {};
+    let currentExceptionApprovals = {};
+    
+    // Initialize the interface
+    window.onload = function() {
+      console.log("Pre-payroll validation system loaded");
+      updateStatusBar();
+    };
+    
+    // Debug cache system
+    function debugCache() {
+      showLoading("Testing cache system...");
+      updateStatusInfo("Testing cache system...");
+      
+      google.script.run
+        .withSuccessHandler(handleDebugResults)
+        .withFailureHandler(handleError)
+        .debugCachingSystem();
+    }
+    
+    // Handle debug results
+    function handleDebugResults(response) {
+      console.log("Debug results:", response);
+      
+      if (response.success) {
+        const employeeCount = response.cachedEmployees || response.employeeCount || 0;
+        const payrollCount = response.cachedPayrollRecords || response.payrollRecordCount || 0;
+        showMessage(`✅ Cache system working: ${employeeCount} employees, ${payrollCount} payroll records`, "success");
+      } else {
+        showMessage(`❌ Cache system failed: ${response.error}`, "error");
+      }
+      
+      updateStatusInfo("Cache test completed");
+    }
+    
+    // Run all validation checks
+    function runAllChecks() {
+      showLoading("Running all validation checks...");
+      updateStatusInfo("Running validation checks...");
+      
+      // Disable the button to prevent double-clicking
+      const runBtn = document.getElementById('runChecksBtn');
+      runBtn.disabled = true;
+      runBtn.textContent = '⏳ Running Checks...';
+      
+      google.script.run
+        .withSuccessHandler(handleCheckResults)
+        .withFailureHandler(handleError)
+        .runAllPrePayrollChecks();
+    }
+    
+    // FIXED: Handle check results with improved caching workflow support
+    function handleCheckResults(response) {
+      console.log("Check results received:", response);
+      
+      // Re-enable the run button
+      const runBtn = document.getElementById('runChecksBtn');
+      runBtn.disabled = false;
+      runBtn.textContent = '🚀 Run All Checks';
+      
+      // IMPROVED: Handle the "needs caching" scenario
+      if (response && response.needsCaching) {
+        console.log("Data caching required before validation");
+        
+        // Show caching status information
+        const cachingInfo = response.cachingStatus || {};
+        const statusMsg = `Data caching required. Current status: ${cachingInfo.overallStatus || 'unknown'}`;
+        
+        showMessage("⏳ " + response.message, "info");
+        updateStatusInfo(statusMsg);
+        
+        // Show caching instructions in the overview
+        const overviewContent = document.getElementById('overviewContent');
+        const cachingHtml = `
+          <div class="message info">
+            <h3>📦 Data Caching Required</h3>
+            <p>${response.message}</p>
+            <p><strong>Current Status:</strong> ${cachingInfo.overallStatus || 'Not started'}</p>
+            ${cachingInfo.recommendations ? `
+              <p><strong>Next Steps:</strong></p>
+              <ul>
+                ${cachingInfo.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+          
+          <div class="caching-controls">
+            <button class="button" onclick="startDataCaching()" id="startCachingBtn">
+              🚀 Start Data Caching
+            </button>
+            <button class="button" onclick="checkCachingProgress()" id="checkProgressBtn">
+              📊 Check Progress
+            </button>
+          </div>
+          
+          <div id="cachingProgress" style="display: none;">
+            <h4>Caching Progress:</h4>
+            <div id="progressDetails"></div>
+          </div>
+        `;
+        
+        overviewContent.innerHTML = cachingHtml;
+        overviewContent.style.display = 'block';
+        document.getElementById('overviewLoading').style.display = 'none';
+        
+        return; // Exit early - this is not an error
+      }
+      
+      // EXISTING: Handle actual errors
+      if (!response || !response.success) {
+        const errorMsg = response?.error || "Unknown error running checks";
+        showMessage("Error running checks: " + errorMsg, "error");
+        updateStatusInfo("Check execution failed");
+        console.error("Check execution failed:", response);
+        
+        // Show detailed error if available
+        if (response?.error) {
+          showErrorDetails("Check Execution Failed", response.error, response.stack);
+        }
+        return;
+      }
+      
+      // REST OF THE EXISTING FUNCTION REMAINS THE SAME...
+      // Validate that we have results
+      if (!response.checkResults || typeof response.checkResults !== 'object') {
+        showMessage("Error: Invalid check results format received", "error");
+        updateStatusInfo("Invalid response format");
+        console.error("Invalid response format:", response);
+        showErrorDetails("Invalid Response", "Response does not contain valid checkResults", JSON.stringify(response, null, 2));
+        return;
+      }
+      
+      currentResults = response.checkResults;
+      currentApprovals = response.approvals || {};
+      currentExceptionApprovals = response.exceptionApprovals || {};
+      
+      // Check if we have any results
+      const checkNames = Object.keys(currentResults);
+      if (checkNames.length === 0) {
+        showMessage("Warning: No validation checks were executed", "warning");
+        updateStatusInfo("No checks executed");
+        return;
+      }
+      
+      // Create tabs for each check
+      createCheckTabs();
+      
+      // Update overview
+      updateOverview();
+      
+      // Update status bar
+      updateStatusBar();
+      
+      // Show appropriate message
+      const failedChecks = checkNames.filter(name => 
+        currentResults[name] && currentResults[name].status === 'error'
+      ).length;
+      
+      if (failedChecks > 0) {
+        showMessage(`${failedChecks} checks failed to execute. Check individual tabs for details.`, "warning");
+        updateStatusInfo(`${response.totalChecks - failedChecks}/${response.totalChecks} checks completed`);
+      } else {
+        showMessage(`All ${response.totalChecks} checks completed in ${response.executionTime}ms`, "success");
+        updateStatusInfo(`All ${response.totalChecks} checks completed successfully`);
+      }
+    }
+
+    // NEW: Functions to handle data caching workflow
+    function startDataCaching() {
+      showMessage("🚀 Starting data caching process...", "info");
+      updateStatusInfo("Starting data caching...");
+      
+      const startBtn = document.getElementById('startCachingBtn');
+      if (startBtn) {
+        startBtn.disabled = true;
+        startBtn.textContent = '⏳ Starting...';
+      }
+      
+      google.script.run
+        .withSuccessHandler(handleCachingResult)
+        .withFailureHandler(handleError)
+        .startProgressiveCaching();
+    }
+
+    function checkCachingProgress() {
+      showMessage("📊 Checking caching progress...", "info");
+      
+      google.script.run
+        .withSuccessHandler(handleCachingProgressResult)
+        .withFailureHandler(handleError)
+        .checkCachingProgress();
+    }
+
+    function continueDataCaching() {
+      showMessage("⏭️ Continuing data caching...", "info");
+      
+      google.script.run
+        .withSuccessHandler(handleCachingResult)
+        .withFailureHandler(handleError)
+        .continueProgressiveCaching();
+    }
+
+    function handleCachingResult(response) {
+      console.log("Caching result:", response);
+      
+      // Re-enable the start button
+      const startBtn = document.getElementById('startCachingBtn');
+      if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.textContent = '🚀 Start Data Caching';
+      }
+      
+      if (response.success) {
+        if (response.completed) {
+          showMessage("✅ Data caching completed! You can now run validation checks.", "success");
+          updateStatusInfo("Data cached - ready for validation");
+          
+          // Hide caching UI and enable run checks button
+          document.getElementById('cachingProgress').style.display = 'none';
+          const runBtn = document.getElementById('runChecksBtn');
+          if (runBtn) {
+            runBtn.disabled = false;
+          }
+          
+          // Update overview to show ready state
+          const overviewContent = document.getElementById('overviewContent');
+          overviewContent.innerHTML = `
+            <div class="message success">
+              <h3>✅ System Ready</h3>
+              <p>Data caching completed successfully. You can now run validation checks.</p>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+              <button class="button" onclick="runAllChecks()">🚀 Run Validation Checks</button>
+            </div>
+          `;
+        } else {
+          const progressMsg = `${response.stage}: ${response.progress}% complete`;
+          showMessage(`⏳ Caching in progress: ${progressMsg}`, "info");
+          updateStatusInfo(progressMsg);
+          
+          // Show progress and continue button
+          showCachingProgress(response);
+        }
+      } else {
+        showMessage(`❌ Caching failed: ${response.error}`, "error");
+        updateStatusInfo("Caching failed");
+      }
+    }
+
+    function handleCachingProgressResult(response) {
+      console.log("Caching progress:", response);
+      
+      if (response.overallStatus === 'completed') {
+        showMessage("✅ Data caching is complete! Ready to run validation checks.", "success");
+        updateStatusInfo("Data cached - ready for validation");
+        
+        // Update overview to show ready state
+        const overviewContent = document.getElementById('overviewContent');
+        overviewContent.innerHTML = `
+          <div class="message success">
+            <h3>✅ System Ready</h3>
+            <p>Data caching completed successfully. You can now run validation checks.</p>
+          </div>
+          <div style="text-align: center; margin-top: 20px;">
+            <button class="button" onclick="runAllChecks()">🚀 Run Validation Checks</button>
+          </div>
+        `;
+      } else {
+        const statusMsg = `Caching status: ${response.overallStatus} (${response.currentStage})`;
+        showMessage(`⏳ ${statusMsg}`, "info");
+        updateStatusInfo(statusMsg);
+        showCachingProgress(response);
+      }
+    }
+
+    function showCachingProgress(progressData) {
+      const progressDiv = document.getElementById('cachingProgress');
+      const detailsDiv = document.getElementById('progressDetails');
+      
+      if (!progressDiv || !detailsDiv) return;
+      
+      const progress = progressData.progress || 0;
+      
+      let progressHtml = `
+        <div class="message info">
+          <strong>Current Stage:</strong> ${progressData.stage || progressData.currentStage || 'Unknown'}<br>
+          <strong>Progress:</strong> ${progress}%<br>
+          <strong>Status:</strong> ${progressData.message || 'Processing...'}
+        </div>
+        
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${progress}%"></div>
+        </div>
+      `;
+      
+      if (progressData.stageProgress) {
+        progressHtml += `<div class="stage-list">`;
+        Object.entries(progressData.stageProgress).forEach(([stage, info]) => {
+          const status = info.status === 'completed' ? '✅' : info.status === 'in_progress' ? '⏳' : '⏸️';
+          const stageProgress = info.progress || 0;
+          progressHtml += `
+            <div class="stage-item">
+              <span class="stage-icon">${status}</span>
+              <div class="stage-info">
+                <div>${stage.replace('payroll_', '').replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</div>
+                <div class="stage-progress">${stageProgress}% (${info.completedChunks || 0}/${info.totalChunks || 0} chunks)</div>
+              </div>
+            </div>
+          `;
+        });
+        progressHtml += `</div>`;
+      }
+      
+      if (!progressData.completed && progressData.nextAction) {
+        progressHtml += `
+          <div style="margin-top: 15px; text-align: center;">
+            <button class="button" onclick="continueDataCaching()">⏭️ Continue Caching</button>
+          </div>
+        `;
+      }
+      
+      detailsDiv.innerHTML = progressHtml;
+      progressDiv.style.display = 'block';
+    }
+    
+    // Show error details in a dedicated section
+    function showErrorDetails(title, message, details) {
+      const overviewContent = document.getElementById('overviewContent');
+      const errorHtml = `
+        <div class="error-details">
+          <div class="error-title">${title}</div>
+          <div class="error-message">${message}</div>
+          ${details ? `<details><summary>Technical Details</summary><pre>${details}</pre></details>` : ''}
+        </div>
+      `;
+      
+      overviewContent.innerHTML = errorHtml;
+      overviewContent.style.display = 'block';
+      document.getElementById('overviewLoading').style.display = 'none';
+    }
+    
+    // Update status info text
+    function updateStatusInfo(text) {
+      document.getElementById('statusInfo').textContent = text;
+    }
+    
+    // Create tabs for each check
+    function createCheckTabs() {
+      const tabButtons = document.getElementById('tabButtons');
+      const container = document.querySelector('.tab-container');
+      
+      // Clear existing check tabs (keep overview)
+      const existingCheckTabs = container.querySelectorAll('[id^="check-"]');
+      existingCheckTabs.forEach(tab => tab.remove());
+      
+      const existingCheckButtons = tabButtons.querySelectorAll('[data-check]');
+      existingCheckButtons.forEach(btn => btn.remove());
+      
+      // Create tab for each check
+      Object.keys(currentResults).forEach(checkName => {
+        const result = currentResults[checkName];
+        const approved = currentApprovals[checkName];
+        
+        // Calculate exception progress
+        const exceptionApprovals = currentExceptionApprovals[checkName] || {};
+        const totalExceptions = result.exceptions?.length || 0;
+        const markedExceptions = Object.values(exceptionApprovals).filter(status => 
+          status === 'ok' || status === 'amended'
+        ).length;
+        const allExceptionsMarked = totalExceptions === 0 || markedExceptions === totalExceptions;
+        
+        // Create tab button
+        const button = document.createElement('button');
+        button.className = 'tab-button';
+        button.setAttribute('data-check', checkName);
+        button.onclick = () => showTab(`check-${checkName}`);
+        
+        let statusClass = approved ? 'approved' : result.status;
+        let statusText = approved ? 'APPROVED' : result.status.toUpperCase();
+        
+        // Show exception progress if there are exceptions and not all marked
+        if (totalExceptions > 0 && !approved) {
+          if (allExceptionsMarked) {
+            statusClass = 'pass';
+            statusText = 'READY';
+          } else {
+            statusClass = 'warning';
+            statusText = `${markedExceptions}/${totalExceptions}`;
+          }
+        }
+        
+        button.innerHTML = `
+          <span>${getCheckIcon(checkName)} ${getShortCheckName(checkName)}</span>
+          <span class="tab-status ${statusClass}">${statusText}</span>
+        `;
+        
+        tabButtons.appendChild(button);
+        
+        // Create tab content
+        const tabContent = document.createElement('div');
+        tabContent.id = `check-${checkName}`;
+        tabContent.className = 'tab-content';
+        tabContent.innerHTML = createCheckContent(checkName, result, approved);
+        
+        container.appendChild(tabContent);
+      });
+    }
+    
+    // Get short name for tabs
+    function getShortCheckName(checkName) {
+      const shortNames = {
+        'Salary Validation': 'Salary',
+        'National Minimum Wage Compliance': 'NMW',
+        'NMW Compliance': 'NMW',
+        'Duplicate Backpays': 'Duplicates',
+        'EV Scheme Payments': 'EV Scheme',
+        'Missing/Blank Payments': 'Missing Pay',
+        'Car Allowance': 'Car Allow.',
+        'Net Negative Payments': 'Negatives',
+        'Preview vs Upload Files': 'Preview',
+        'Preview vs Upload': 'Preview'
+      };
+      return shortNames[checkName] || checkName.substring(0, 10);
+    }
+    
+    function getCheckIcon(checkName) {
+      const icons = {
+        'Salary Validation': '💰',
+        'National Minimum Wage Compliance': '⚖️',
+        'NMW Compliance': '⚖️',
+        'Duplicate Backpays': '🔄',
+        'EV Scheme Payments': '🚗',
+        'Missing/Blank Payments': '❓',
+        'Car Allowance': '🚙',
+        'Net Negative Payments': '⚠️',
+        'Preview vs Upload Files': '📂',
+        'Preview vs Upload': '📂'
+      };
+      return icons[checkName] || '📋';
+    }
+    
+    // Create content for a check tab
+    function createCheckContent(checkName, result, approved) {
+      const approvalClass = approved ? 'approved' : 'pending';
+      const statusClass = result.status;
+      
+      // Get exception approval status
+      const exceptionApprovals = currentExceptionApprovals[checkName] || {};
+      const totalExceptions = result.exceptions?.length || 0;
+      const markedExceptions = Object.values(exceptionApprovals).filter(status => 
+        status === 'ok' || status === 'amended'
+      ).length;
+      const allExceptionsMarked = totalExceptions === 0 || markedExceptions === totalExceptions;
+      
+      let content = `
+        <div class="check-result">
+          <div class="check-header">
+            <div class="check-title">${getCheckIcon(checkName)} ${checkName}</div>
+            <div class="tab-status ${statusClass}">${result.status.toUpperCase()}</div>
+          </div>
+          
+          <div class="check-summary">${result.summary}</div>
+          
+          <div class="check-stats">
+            <div class="stat-box ${statusClass}">
+              <div class="stat-number">${result.recordsChecked || 0}</div>
+              <div class="stat-label">Records Checked</div>
+            </div>
+            <div class="stat-box ${totalExceptions > 0 ? 'warning' : 'pass'}">
+              <div class="stat-number">${totalExceptions}</div>
+              <div class="stat-label">Exceptions Found</div>
+            </div>
+            <div class="stat-box ${allExceptionsMarked ? 'pass' : 'warning'}">
+              <div class="stat-number">${markedExceptions}/${totalExceptions}</div>
+              <div class="stat-label">Exceptions Reviewed</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-number">${result.executionTime || 0}ms</div>
+              <div class="stat-label">Execution Time</div>
+            </div>
+          </div>
+      `;
+      
+      // Show error details if check failed
+      if (result.status === 'error' && result.error) {
+        content += `
+          <div class="error-details">
+            <div class="error-title">Check Execution Error</div>
+            <div class="error-message">${result.error}</div>
+            ${result.details?.errorStack ? `<details><summary>Stack Trace</summary><pre>${result.details.errorStack}</pre></details>` : ''}
+          </div>
+        `;
+      }
+      
+      // Add exceptions table if there are any
+      if (result.exceptions && result.exceptions.length > 0) {
+        content += `
+          <h4>Exceptions Found (${markedExceptions}/${totalExceptions} reviewed):</h4>
+          <table class="exceptions-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Issue</th>
+                <th>Severity</th>
+                <th>Details</th>
+                <th>Review Status</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        result.exceptions.forEach(exception => {
+          const exceptionId = exception.exceptionId || `${checkName}_${exception.employeeNumber}_${Date.now()}`;
+          const exceptionStatus = exceptionApprovals[exceptionId] || null;
+          const isOK = exceptionStatus === 'ok';
+          const isAmended = exceptionStatus === 'amended';
+          
+          content += `
+            <tr class="exception-row ${exception.severity}">
+              <td>
+                <strong>${exception.employeeNumber}</strong><br>
+                <small>${exception.employeeName}</small>
+              </td>
+              <td>${exception.issue}</td>
+              <td><span class="severity-badge ${exception.severity}">${exception.severity.toUpperCase()}</span></td>
+              <td><small>${formatExceptionDetails(exception.details)}</small></td>
+              <td>
+                <div class="exception-controls">
+                  <label>
+                    <input type="checkbox" ${isOK ? 'checked' : ''} 
+                           onchange="markException('${checkName}', '${exceptionId}', 'ok', this)">
+                    <span>✅ OK</span>
+                  </label>
+                  <label>
+                    <input type="checkbox" ${isAmended ? 'checked' : ''} 
+                           onchange="markException('${checkName}', '${exceptionId}', 'amended', this)">
+                    <span>📝 Amended</span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        
+        content += `
+            </tbody>
+          </table>
+        `;
+      } else if (result.status !== 'error') {
+        content += `<div style="color: #34a853; margin: 20px 0; text-align: center; padding: 20px; background: #f0f9f0; border-radius: 4px;">✅ No exceptions found - all checks passed!</div>`;
+      }
+      
+      // Add approval section (only if not an error)
+      if (result.status !== 'error') {
+        content += `
+          </div>
+          <div class="approval-section ${approvalClass}">
+        `;
+        
+        if (approved) {
+          content += `
+            <h3>✅ Check Approved</h3>
+            <p>This check has been reviewed and approved.</p>
+            <div style="margin-top: 15px;">
+              <button class="button warning" onclick="revokeApproval('${checkName}')">❌ Revoke Approval</button>
+            </div>
+          `;
+        } else {
+          if (totalExceptions > 0 && !allExceptionsMarked) {
+            content += `
+              <h3>⏳ Review Required</h3>
+              <p>Please review all ${totalExceptions} exceptions above and mark each as either OK or Amended.</p>
+              <p><strong>Progress: ${markedExceptions} of ${totalExceptions} exceptions reviewed</strong></p>
+              <div style="margin-top: 15px;">
+                <button class="button" disabled title="Mark all exceptions first">✅ Approve Check (${totalExceptions - markedExceptions} exceptions pending)</button>
+              </div>
+            `;
+          } else {
+            content += `
+              <h3>✅ Ready for Approval</h3>
+              <p>${totalExceptions > 0 ? 'All exceptions have been reviewed.' : 'No exceptions found.'} You can now approve this check.</p>
+              <div style="margin-top: 15px;">
+                <button class="button success" onclick="approveCheck('${checkName}')">✅ Approve Check</button>
+              </div>
+            `;
+          }
+        }
+        
+        content += `</div>`;
+      } else {
+        content += `</div>`;
+      }
+      
+      return content;
+    }
+    
+    // Format exception details for display
+    function formatExceptionDetails(details) {
+      if (!details || typeof details !== 'object') {
+        return String(details || '').substring(0, 100);
+      }
+      
+      // Extract key information for display
+      const important = [];
+      if (details.grossAmount !== undefined) important.push(`Gross: £${details.grossAmount}`);
+      if (details.netPay !== undefined) important.push(`Net: £${details.netPay}`);
+      if (details.expectedSalary !== undefined) important.push(`Expected: £${details.expectedSalary}`);
+      if (details.calculatedGross !== undefined) important.push(`Calculated: £${details.calculatedGross}`);
+      if (details.difference !== undefined) important.push(`Diff: £${details.difference}`);
+      if (details.location) important.push(`Location: ${details.location}`);
+      
+      if (important.length > 0) {
+        return important.join(', ');
+      }
+      
+      return JSON.stringify(details).substring(0, 100);
+    }
+    
+    // Update overview tab
+    function updateOverview() {
+      document.getElementById('overviewLoading').style.display = 'none';
+      document.getElementById('overviewContent').style.display = 'block';
+      
+      const summary = calculateSummary();
+      
+      document.getElementById('overviewContent').innerHTML = `
+        <div class="check-stats">
+          <div class="stat-box pass">
+            <div class="stat-number">${summary.passed}</div>
+            <div class="stat-label">Passed</div>
+          </div>
+          <div class="stat-box warning">
+            <div class="stat-number">${summary.warnings}</div>
+            <div class="stat-label">Warnings</div>
+          </div>
+          <div class="stat-box fail">
+            <div class="stat-number">${summary.failed}</div>
+            <div class="stat-label">Failed</div>
+          </div>
+          <div class="stat-box error">
+            <div class="stat-number">${summary.errors}</div>
+            <div class="stat-label">Errors</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number">${summary.approved}</div>
+            <div class="stat-label">Approved</div>
+          </div>
+        </div>
+        
+        <div class="message ${summary.allApproved ? 'success' : 'info'}">
+          ${summary.allApproved ? 
+            '🎉 All checks approved! You can now generate payroll reports.' :
+            `📋 ${summary.approved} of ${summary.total} checks approved. ${summary.errors > 0 ? `${summary.errors} checks failed to execute. ` : ''}Review and approve remaining checks to unlock report generation.`
+          }
+        </div>
+        
+        ${summary.errors > 0 ? `
+          <div class="message warning">
+            ⚠️ ${summary.errors} checks failed to execute due to errors. Check individual tabs for details and try running the cache debug test.
+          </div>
+        ` : ''}
+      `;
+    }
+    
+    // Calculate summary statistics
+    function calculateSummary() {
+      let passed = 0, warnings = 0, failed = 0, errors = 0, approved = 0, total = 0;
+      
+      Object.keys(currentResults || {}).forEach(checkName => {
+        const result = currentResults[checkName];
+        total++;
+        
+        switch(result.status) {
+          case 'pass': passed++; break;
+          case 'warning': warnings++; break;
+          case 'fail': failed++; break;
+          case 'error': errors++; break;
+        }
+        
+        if (currentApprovals[checkName]) {
+          approved++;
+        }
+      });
+      
+      return {
+        total, passed, warnings, failed, errors, approved,
+        allApproved: approved === total && total > 0 && errors === 0
+      };
+    }
+    
+    // Mark an individual exception as OK or Amended
+    function markException(checkName, exceptionId, status, checkbox) {
+      // Ensure only one checkbox is selected per exception
+      const row = checkbox.closest('tr');
+      const checkboxes = row.querySelectorAll('input[type="checkbox"]');
+      
+      if (checkbox.checked) {
+        // Uncheck other checkbox in this row
+        checkboxes.forEach(cb => {
+          if (cb !== checkbox) {
+            cb.checked = false;
+          }
+        });
+        
+        // Mark exception with backend
+        google.script.run
+          .withSuccessHandler((response) => {
+            console.log(`Exception marked as ${status}:`, response);
+            
+            // Update the current state
+            if (!currentExceptionApprovals[checkName]) {
+              currentExceptionApprovals[checkName] = {};
+            }
+            currentExceptionApprovals[checkName][exceptionId] = status;
+            
+            // Refresh the tab to update approval button status
+            refreshTab(checkName);
+            updateOverview();
+            updateStatusBar();
+            
+            if (response.canApproveCheck) {
+              showMessage(`✅ All exceptions in ${checkName} reviewed - ready for approval!`, "success");
+            }
+          })
+          .withFailureHandler((error) => {
+            console.error("Error marking exception:", error);
+            checkbox.checked = false; // Uncheck on error
+            handleError(error);
+          })
+          .markExceptionEnhanced(checkName, exceptionId, status);
+      } else {
+        // Unchecking - clear the exception status
+        google.script.run
+          .withSuccessHandler((response) => {
+            console.log(`Exception status cleared:`, response);
+            
+            // Update the current state
+            if (currentExceptionApprovals[checkName]) {
+              currentExceptionApprovals[checkName][exceptionId] = null;
+            }
+            
+            // Refresh the tab
+            refreshTab(checkName);
+            updateOverview();
+            updateStatusBar();
+          })
+          .withFailureHandler(handleError)
+          .markExceptionEnhanced(checkName, exceptionId, null);
+      }
+    }
+    
+    function approveCheck(checkName) {
+      google.script.run
+        .withSuccessHandler((response) => {
+          currentApprovals[checkName] = true;
+          refreshTab(checkName);
+          updateOverview();
+          updateStatusBar();
+          showMessage(`✅ ${checkName} approved`, "success");
+        })
+        .withFailureHandler(handleError)
+        .approveCheck(checkName);
+    }
+    
+    // Revoke approval
+    function revokeApproval(checkName) {
+      google.script.run
+        .withSuccessHandler((response) => {
+          currentApprovals[checkName] = false;
+          refreshTab(checkName);
+          updateOverview();
+          updateStatusBar();
+          showMessage(`❌ ${checkName} approval revoked`, "info");
+        })
+        .withFailureHandler(handleError)
+        .revokeCheckApproval(checkName);
+    }
+    
+    // Refresh a specific tab
+    function refreshTab(checkName) {
+      const tabContent = document.getElementById(`check-${checkName}`);
+      const tabButton = document.querySelector(`[data-check="${checkName}"]`);
+      
+      if (tabContent && currentResults[checkName]) {
+        const result = currentResults[checkName];
+        const approved = currentApprovals[checkName];
+        
+        tabContent.innerHTML = createCheckContent(checkName, result, approved);
+        
+        // Update tab button with exception progress
+        const exceptionApprovals = currentExceptionApprovals[checkName] || {};
+        const totalExceptions = result.exceptions?.length || 0;
+        const markedExceptions = Object.values(exceptionApprovals).filter(status => 
+          status === 'ok' || status === 'amended'
+        ).length;
+        const allExceptionsMarked = totalExceptions === 0 || markedExceptions === totalExceptions;
+        
+        let statusClass = approved ? 'approved' : result.status;
+        let statusText = approved ? 'APPROVED' : result.status.toUpperCase();
+        
+        // Show exception progress if there are exceptions and not all marked
+        if (totalExceptions > 0 && !approved) {
+          if (allExceptionsMarked) {
+            statusClass = 'pass';
+            statusText = 'READY';
+          } else {
+            statusClass = 'warning';
+            statusText = `${markedExceptions}/${totalExceptions}`;
+          }
+        }
+        
+        tabButton.innerHTML = `
+          <span>${getCheckIcon(checkName)} ${getShortCheckName(checkName)}</span>
+          <span class="tab-status ${statusClass}">${statusText}</span>
+        `;
+      }
+    }
+    
+    // Generate reports
+    function generateReports() {
+      if (!confirm('Generate final payroll reports? This action cannot be undone.')) {
+        return;
+      }
+      
+      showLoading("Generating payroll reports...");
+      updateStatusInfo("Generating payroll reports...");
+      
+      google.script.run
+        .withSuccessHandler((response) => {
+          showMessage("🎉 Payroll reports generated successfully!", "success");
+          updateStatusInfo("Payroll reports generated");
+          // TODO: Add links to generated files
+        })
+        .withFailureHandler(handleError)
+        .generatePayrollReports();
+    }
+    
+    // Reset system
+    function resetSystem() {
+      if (!confirm('Reset all checks and approvals? This will clear all current results.')) {
+        return;
+      }
+      
+      showLoading("Resetting validation system...");
+      updateStatusInfo("Resetting system...");
+      
+      google.script.run
+        .withSuccessHandler((response) => {
+          currentResults = null;
+          currentApprovals = {};
+          currentExceptionApprovals = {};
+          
+          // Reset UI
+          document.getElementById('overviewLoading').style.display = 'block';
+          document.getElementById('overviewContent').style.display = 'none';
+          
+          // Remove check tabs
+          const container = document.querySelector('.tab-container');
+          const existingCheckTabs = container.querySelectorAll('[id^="check-"]');
+          existingCheckTabs.forEach(tab => tab.remove());
+          
+          const tabButtons = document.getElementById('tabButtons');
+          const existingCheckButtons = tabButtons.querySelectorAll('[data-check]');
+          existingCheckButtons.forEach(btn => btn.remove());
+          
+          // Show overview tab
+          showTab('overview');
+          updateStatusBar();
+          
+          showMessage("System reset successfully", "info");
+          updateStatusInfo("Ready to run validation checks");
+        })
+        .withFailureHandler(handleError)
+        .resetValidationSystem();
+    }
+    
+    // Update status bar
+    function updateStatusBar() {
+      const statusInfo = document.getElementById('statusInfo');
+      const generateBtn = document.getElementById('generateReportsBtn');
+      
+      if (!currentResults) {
+        statusInfo.textContent = "Ready to run validation checks";
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = "📊 Generate Reports (Run checks first)";
+        return;
+      }
+      
+      const summary = calculateSummary();
+      statusInfo.textContent = `${summary.approved}/${summary.total} checks approved`;
+      generateBtn.disabled = !summary.allApproved;
+      
+      if (summary.allApproved) {
+        generateBtn.innerHTML = "📊 Generate Payroll Reports";
+        generateBtn.title = "All checks approved - ready to generate reports";
+      } else {
+        const pending = summary.total - summary.approved;
+        generateBtn.innerHTML = `📊 Generate Reports (${pending} checks need approval)`;
+        generateBtn.title = `Approve all ${summary.total} checks before generating reports`;
+      }
+    }
+    
+    // Show tab
+    function showTab(tabId) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Hide all tab buttons
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Show selected tab
+      const selectedTab = document.getElementById(tabId);
+      if (selectedTab) {
+        selectedTab.classList.add('active');
+      }
+      
+      // Activate corresponding button
+      const selectedButton = tabId === 'overview' ? 
+        document.querySelector('.tab-button:not([data-check])') :
+        document.querySelector(`[data-check="${tabId.replace('check-', '')}"]`);
+      
+      if (selectedButton) {
+        selectedButton.classList.add('active');
+      }
+    }
+    
+    // Show loading message
+    function showLoading(message) {
+      console.log("Loading:", message);
+      // The UI already shows loading state for the operations
+    }
+    
+    // Show message
+    function showMessage(message, type) {
+      const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+      console.log(`${icon} ${message}`);
+      
+      // Create a temporary message element
+      const messageEl = document.createElement('div');
+      messageEl.className = `message ${type}`;
+      messageEl.textContent = message;
+      messageEl.style.position = 'fixed';
+      messageEl.style.top = '20px';
+      messageEl.style.right = '20px';
+      messageEl.style.zIndex = '1000';
+      messageEl.style.maxWidth = '400px';
+      messageEl.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+      
+      document.body.appendChild(messageEl);
+      
+      // Remove after 5 seconds
+      setTimeout(() => {
+        if (messageEl.parentNode) {
+          messageEl.parentNode.removeChild(messageEl);
+        }
+      }, 5000);
+    }
+    
+    // Handle errors
+    function handleError(error) {
+      console.error("Error:", error);
+      const errorMsg = error.message || error.toString();
+      showMessage("Error: " + errorMsg, "error");
+      updateStatusInfo("Error occurred");
+      
+      // Re-enable buttons that might have been disabled
+      const runBtn = document.getElementById('runChecksBtn');
+      if (runBtn) {
+        runBtn.disabled = false;
+        runBtn.textContent = '🚀 Run All Checks';
+      }
+      
+      const startBtn = document.getElementById('startCachingBtn');
+      if (startBtn) {
+        startBtn.disabled = false;
+        startBtn.textContent = '🚀 Start Data Caching';
+      }
+    }
+  </script>
+</body>
+</html>
