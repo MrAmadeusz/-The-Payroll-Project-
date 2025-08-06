@@ -1,0 +1,989 @@
+/**
+ * 💰 04_nmwCompliance.gs
+ * 
+ * Comprehensive NMW compliance functionality including:
+ * - Rate management and employee compliance checking
+ * - Flexible batch processing and reporting
+ * - UI support and legacy compatibility
+ * - Full integration with employee directory and payroll calendar
+ */
+
+// === Constants & Configuration ===
+const NMW_CONFIG = {
+  AGE_BANDS: {
+    UNDER_18: 'under18',
+    EIGHTEEN_TO_TWENTY: '18to20', 
+    TWENTY_ONE_PLUS: '21plus'
+  }
+};
+
+const REPORT_FORMATS = {
+  SUMMARY: 'summary',
+  DETAILED: 'detailed', 
+  AUDIT: 'audit'
+};
+
+const OUTPUT_DESTINATIONS = {
+  SHEET: 'sheet',
+  DRIVE: 'drive',
+  JSON: 'json'
+};
+
+// === Core Configuration Loading ===
+
+/**
+ * Loads NMW rate configuration from Drive.
+ * @returns {Array<Object>} Parsed rate bands with Date objects
+ */
+function loadNMWConfiguration() {
+  try {
+    const rawData = loadJsonFromDrive(CONFIG.NMW_RATE_CARD_FILE_ID);
+    
+    if (!Array.isArray(rawData)) {
+      throw new Error("NMW configuration must be an array");
+    }
+    
+    return rawData.map((band, index) => {
+      if (!band.staffType || !band.effectiveFrom || !band.bands) {
+        throw new Error(`Invalid rate band at index ${index}: missing required fields`);
+      }
+      
+      if (!['Salaried', 'Hourly'].includes(band.staffType)) {
+        throw new Error(`Invalid staffType at index ${index}: ${band.staffType}`);
+      }
+      
+      return {
+        ...band,
+        effectiveFrom: new Date(band.effectiveFrom),
+        bands: {
+          under18: parseAsNullableNumber(band.bands.under18) || 0,
+          '18to20': parseAsNullableNumber(band.bands['18to20']) || 0,
+          '21plus': parseAsNullableNumber(band.bands['21plus']) || 0
+        }
+      };
+    });
+    
+  } catch (error) {
+    throw new Error(`Failed to load NMW configuration: ${error.message}`);
+  }
+}
+
+/**
+ * Gets employee data with NMW-optimized indexes.
+ * @returns {Object} Employee data and indexes for fast filtering
+ */
+function getNMWOptimizedEmployees() {
+  const employees = getAllEmployees();
+  
+  const indexes = {
+    payType: buildDataIndex(employees, 'PayType'),
+    location: buildDataIndex(employees, 'Location'),
+    division: buildDataIndex(employees, 'Division'),
+    status: buildDataIndex(employees, 'Status')
+  };
+  
+  return { employees, indexes };
+}
+
+// === Core Rate Management ===
+
+/**
+ * Gets the applicable NMW rate for an employee.
+ * @param {string} staffType - "Salaried" or "Hourly"
+ * @param {number} age - Employee age
+ * @param {Date} effectiveDate - Date to find rate for
+ * @returns {Object} Success/failure result with rate
+ */
+function getNMWRateForEmployee(staffType, age, effectiveDate) {
+  try {
+    const bands = loadNMWConfiguration();
+    const normalizedStaffType = normalizePayType(staffType);
+    const date = new Date(effectiveDate);
+    
+    // Find applicable rate bands
+    const applicableBands = bands
+      .filter(band => band.staffType === normalizedStaffType && band.effectiveFrom <= date)
+      .sort((a, b) => b.effectiveFrom - a.effectiveFrom);
+    
+    if (applicableBands.length === 0) {
+      throw new Error(`No NMW rate found for ${normalizedStaffType} on ${date.toDateString()}`);
+    }
+    
+    // Get the most recent rate
+    const latestBand = applicableBands[0];
+    
+    // Determine age band
+    let ageBand;
+    if (age < 18) ageBand = NMW_CONFIG.AGE_BANDS.UNDER_18;
+    else if (age <= 20) ageBand = NMW_CONFIG.AGE_BANDS.EIGHTEEN_TO_TWENTY;
+    else ageBand = NMW_CONFIG.AGE_BANDS.TWENTY_ONE_PLUS;
+    
+    const rate = latestBand.bands[ageBand];
+    
+    if (!rate || rate <= 0) {
+      throw new Error(`Invalid NMW rate for age ${age}: ${rate}`);
+    }
+    
+    return { success: true, result: rate };
+    
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Calculates the effective hourly rate for an employee.
+ * @param {Object} employee - Employee object
+ * @returns {Object} Success/failure result with hourly rate
+ */
+function calculateEffectiveHourlyRate(employee) {
+  if (!employee.PayType) {
+    return {
+      success: false,
+      error: "Missing PayType",
+      employeeNumber: employee.EmployeeNumber
+    };
+  }
+  
+  const payType = normalizePayType(employee.PayType);
+  
+  try {
+    let rate, metadata;
+    
+    if (payType === "Hourly") {
+      rate = parseAsNullableNumber(employee.HourlyShiftAmount);
+      if (!rate) throw new Error("Invalid or missing hourly rate");
+      
+      metadata = {
+        method: 'hourly_direct',
+        source: 'HourlyShiftAmount',
+        hourlyRate: rate
+      };
+      
+    } else { // Salaried
+      const salary = parseAsNullableNumber(employee.Salary);
+      const hours = parseAsNullableNumber(employee.ContractHours);
+      
+      if (!salary || !hours) {
+        throw new Error("Invalid or missing salary or contract hours");
+      }
+      
+      rate = salary / (hours * 52);
+      metadata = {
+        method: 'salary_annualized',
+        source: 'Salary_ContractHours',
+        annualSalary: salary,
+        weeklyHours: hours,
+        annualHours: hours * 52
+      };
+    }
+    
+    return {
+      success: true,
+      effectiveHourlyRate: parseFloat(rate.toFixed(2)),
+      metadata: metadata
+    };
+    
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      employeeNumber: employee.EmployeeNumber,
+      payType: employee.PayType
+    };
+  }
+}
+
+/**
+ * Calculates an employee's age as of a specific date.
+ * @param {string|Date} dateOfBirth - Employee's date of birth
+ * @param {Date} referenceDate - Date to calculate age as of
+ * @returns {Object} Success/failure result with age
+ */
+function calculateEmployeeAge(dateOfBirth, referenceDate = new Date()) {
+  const dob = typeof dateOfBirth === 'string' ? parseDMY(dateOfBirth) : new Date(dateOfBirth);
+  const refDate = new Date(referenceDate);
+  
+  if (!dob || isNaN(dob.getTime())) {
+    return { success: false, error: "Invalid date of birth" };
+  }
+  
+  if (dob > refDate) {
+    return { success: false, error: "Date of birth cannot be in the future" };
+  }
+  
+  const ageYears = refDate.getFullYear() - dob.getFullYear();
+  const hasHadBirthday = 
+    refDate.getMonth() > dob.getMonth() || 
+    (refDate.getMonth() === dob.getMonth() && refDate.getDate() >= dob.getDate());
+  
+  return {
+    success: true,
+    age: hasHadBirthday ? ageYears : ageYears - 1,
+    dateOfBirth: dob,
+    referenceDate: refDate
+  };
+}
+
+// === Core Compliance Functions ===
+
+/**
+ * Performs comprehensive NMW compliance check for a single employee.
+ * @param {Object} employee - Employee object from getAllEmployees()
+ * @param {Object} options - Check options
+ * @returns {Object} Comprehensive compliance result
+ */
+function checkEmployeeNMWCompliance(employee, options = {}) {
+  const {
+    effectiveDate = null,
+    includeMetadata = false
+  } = options;
+  
+  // Basic validation
+  if (!employee.EmployeeNumber) {
+    return { success: false, error: "Missing employee number" };
+  }
+  
+  if (!employee.PayType) {
+    return {
+      success: false,
+      employeeNumber: employee.EmployeeNumber,
+      error: "Missing pay type"
+    };
+  }
+  
+  try {
+    // Determine check date and staff type
+    const staffType = normalizePayType(employee.PayType);
+    let checkDate = effectiveDate;
+    
+    if (!checkDate) {
+      const period = getCurrentPayPeriod(staffType === 'Salary' ? 'Salaried' : 'Hourly');
+      if (!period) {
+        throw new Error(`No current pay period found for ${staffType} employees`);
+      }
+      checkDate = period.periodStart;
+    }
+    
+    // Calculate age
+    const ageResult = calculateEmployeeAge(employee.DateOfBirth, checkDate);
+    if (!ageResult.success) {
+      throw new Error(`Age calculation failed: ${ageResult.error}`);
+    }
+    
+    // Calculate hourly rate
+    const rateResult = calculateEffectiveHourlyRate(employee);
+    if (!rateResult.success) {
+      throw new Error(`Rate calculation failed: ${rateResult.error}`);
+    }
+    
+    // Get required NMW rate
+    const nmwRateResult = getNMWRateForEmployee(staffType, ageResult.age, checkDate);
+    if (!nmwRateResult.success) {
+      throw new Error(`NMW rate lookup failed: ${nmwRateResult.error}`);
+    }
+    
+    const requiredRate = nmwRateResult.result;
+    const isCompliant = rateResult.effectiveHourlyRate >= requiredRate;
+    const shortfall = isCompliant ? 0 : requiredRate - rateResult.effectiveHourlyRate;
+    
+    // Build result
+    const result = {
+      success: true,
+      employeeNumber: employee.EmployeeNumber,
+      employeeName: `${employee.Firstnames || ''} ${employee.Surname || ''}`.trim(),
+      payType: employee.PayType,
+      staffType: staffType,
+      age: ageResult.age,
+      effectiveHourlyRate: rateResult.effectiveHourlyRate,
+      requiredNMWRate: requiredRate,
+      isCompliant: isCompliant,
+      shortfall: parseFloat(shortfall.toFixed(2)),
+      checkDate: checkDate,
+      location: employee.Location,
+      division: employee.Division,
+      checkedAt: new Date()
+    };
+    
+    if (includeMetadata) {
+      result.metadata = {
+        rateCalculation: rateResult.metadata,
+        ageCalculation: ageResult
+      };
+    }
+    
+    return result;
+    
+  } catch (error) {
+    return {
+      success: false,
+      employeeNumber: employee.EmployeeNumber,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Legacy compatibility function for existing code.
+ * @param {Object} employee - Employee object
+ * @returns {Object|null} Legacy format result or null
+ */
+function checkEmployeeAgainstNMW(employee) {
+  const result = checkEmployeeNMWCompliance(employee);
+  if (!result || !result.success) return null;
+  
+  return {
+    employeeNumber: result.employeeNumber,
+    employeeName: result.employeeName,
+    payType: result.payType.toLowerCase(),
+    age: result.age,
+    hourlyRate: result.effectiveHourlyRate,
+    requiredNMW: result.requiredNMWRate,
+    isCompliant: result.isCompliant
+  };
+}
+
+// === Batch Processing ===
+
+/**
+ * Runs NMW compliance check for multiple employees with flexible filtering.
+ * @param {Object} filters - Employee filter criteria
+ * @param {Object} options - Processing options
+ * @returns {Object} Batch processing results
+ */
+function runNMWComplianceCheck(filters = {}, options = {}) {
+  const {
+    includeCompliant = false,
+    outputFormat = REPORT_FORMATS.DETAILED,
+    destination = OUTPUT_DESTINATIONS.SHEET
+  } = options;
+  
+  try {
+    console.log('Starting NMW compliance check...');
+    
+    // Get filtered employees using optimized indexes
+    const { employees, indexes } = getNMWOptimizedEmployees();
+    const filteredEmployees = filterDataWithIndexes(employees, filters, {
+      location: 'Location',
+      division: 'Division', 
+      payType: 'PayType',
+      status: 'Status'
+    }, indexes);
+    
+    // Filter to active payroll employees
+    const payrollEmployees = filteredEmployees.filter(emp => 
+      emp.Status?.toLowerCase() === "current" && 
+      emp.IsPayrollEmployee?.toLowerCase() === "yes"
+    );
+    
+    console.log(`Processing ${payrollEmployees.length} payroll employees...`);
+    
+    // Run compliance checks
+    const results = [];
+    const errors = [];
+    
+    payrollEmployees.forEach((employee, index) => {
+      try {
+        const compliance = checkEmployeeNMWCompliance(employee, options);
+        
+        if (compliance && compliance.success) {
+          if (includeCompliant || !compliance.isCompliant) {
+            results.push(compliance);
+          }
+        } else if (compliance) {
+          errors.push({
+            employeeNumber: employee.EmployeeNumber,
+            error: compliance.error
+          });
+        }
+        
+        // Progress log every 100 employees
+        if ((index + 1) % 100 === 0) {
+          console.log(`Processed ${index + 1}/${payrollEmployees.length} employees`);
+        }
+        
+      } catch (error) {
+        errors.push({
+          employeeNumber: employee.EmployeeNumber,
+          error: error.message
+        });
+      }
+    });
+    
+    // Generate summary
+    const summary = {
+      total: results.length,
+      compliant: results.filter(r => r.isCompliant).length,
+      nonCompliant: results.filter(r => !r.isCompliant).length,
+      complianceRate: results.length > 0 ? 
+        ((results.filter(r => r.isCompliant).length / results.length) * 100).toFixed(1) : 0
+    };
+    
+    // Generate report
+    const report = {
+      type: outputFormat,
+      title: `NMW Compliance ${outputFormat.charAt(0).toUpperCase() + outputFormat.slice(1)} Report`,
+      generatedAt: new Date(),
+      filters: filters,
+      summary: summary,
+      results: outputFormat === REPORT_FORMATS.DETAILED ? results : null
+    };
+    
+    // Output results
+    let outputResult = null;
+    if (destination === OUTPUT_DESTINATIONS.SHEET) {
+      outputResult = _writeReportToSheet(report);
+    } else if (destination === OUTPUT_DESTINATIONS.JSON) {
+      outputResult = { success: true, data: report };
+    }
+    
+    console.log(`✅ Check complete: ${summary.compliant}/${summary.total} compliant (${summary.complianceRate}%)`);
+    
+    return {
+      success: true,
+      totalEmployees: filteredEmployees.length,
+      payrollEmployees: payrollEmployees.length,
+      results: results,
+      report: report,
+      output: outputResult,
+      summary: summary,
+      errors: errors
+    };
+    
+  } catch (error) {
+    console.error(`❌ Batch processing failed: ${error.message}`);
+    throw error;
+  }
+}
+
+/**
+ * Legacy function - runs NMW compliance check for a specific location.
+ * @param {string} locationName - Location name to filter by
+ * @returns {Object} Compliance check results
+ */
+function runNMWComplianceCheckForLocation(locationName) {
+  const result = runNMWComplianceCheck(
+    { location: locationName },
+    { includeCompliant: false, destination: OUTPUT_DESTINATIONS.SHEET }
+  );
+  
+  // Write to legacy "NMW_Exceptions" sheet format
+  _writeLegacyNMWExceptionsSheet(result, locationName);
+  
+  return result;
+}
+
+// === Report Generation ===
+
+/**
+ * Writes a report to a new spreadsheet.
+ * @param {Object} report - Report data to write
+ * @returns {Object} Output result with sheet information
+ * @private
+ */
+function _writeReportToSheet(report) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheetName = `NMW_${report.type}_${Date.now()}`;
+  const sheet = ss.insertSheet(sheetName);
+  
+  let row = 1;
+  
+  // Title and metadata
+  sheet.getRange(row++, 1).setValue(report.title);
+  sheet.getRange(row++, 1).setValue(`Generated: ${report.generatedAt.toLocaleString()}`);
+  
+  // Applied filters
+  if (Object.keys(report.filters).length > 0) {
+    row++;
+    sheet.getRange(row++, 1).setValue("Filters Applied:");
+    Object.entries(report.filters).forEach(([key, value]) => {
+      sheet.getRange(row++, 2).setValue(`${key}: ${value}`);
+    });
+  }
+  
+  row++;
+  
+  // Summary statistics
+  const summary = report.summary;
+  sheet.getRange(row++, 1).setValue("Summary:");
+  sheet.getRange(row++, 2).setValue(`Total Employees: ${summary.total}`);
+  sheet.getRange(row++, 2).setValue(`Compliant: ${summary.compliant} (${summary.complianceRate}%)`);
+  sheet.getRange(row++, 2).setValue(`Non-Compliant: ${summary.nonCompliant}`);
+  
+  // Detailed results if available
+  if (report.results && report.results.length > 0) {
+    row += 2;
+    sheet.getRange(row++, 1).setValue("Detailed Results:");
+    
+    const headers = [
+      "Employee#", "Name", "Pay Type", "Age", "Current Rate", 
+      "Required Rate", "Compliant", "Shortfall", "Location", "Division"
+    ];
+    
+    sheet.getRange(row, 1, 1, headers.length).setValues([headers]);
+    row++;
+    
+    const data = report.results.map(r => [
+      r.employeeNumber, r.employeeName, r.payType, r.age,
+      r.effectiveHourlyRate, r.requiredNMWRate, 
+      r.isCompliant ? "Yes" : "No", r.shortfall,
+      r.location, r.division
+    ]);
+    
+    if (data.length > 0) {
+      sheet.getRange(row, 1, data.length, headers.length).setValues(data);
+    }
+  }
+  
+  return {
+    success: true,
+    destination: 'sheet',
+    sheetName: sheetName,
+    url: `${ss.getUrl()}#gid=${sheet.getSheetId()}`
+  };
+}
+
+/**
+ * Writes results to the legacy "NMW_Exceptions" sheet format.
+ * @param {Object} batchResult - Batch processing results
+ * @param {string} locationName - Location name for context
+ * @private
+ */
+function _writeLegacyNMWExceptionsSheet(batchResult, locationName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("NMW_Exceptions");
+  
+  if (!sheet) {
+    sheet = ss.insertSheet("NMW_Exceptions");
+  } else {
+    sheet.clearContents();
+  }
+  
+  const nonCompliant = batchResult.results?.filter(r => !r.isCompliant) || [];
+  
+  if (nonCompliant.length === 0) {
+    sheet.getRange("A1").setValue(`✅ All employees at ${locationName} passed NMW compliance.`);
+    sheet.getRange("A2").setValue(`Checked ${batchResult.payrollEmployees} employees on ${new Date().toLocaleDateString()}`);
+    return;
+  }
+  
+  const headers = [
+    "Employee Number", "Employee Name", "Pay Type", "Age", "Hourly Rate",
+    "Required NMW", "Compliant?", "Location", "Shortfall", "Division"
+  ];
+  
+  const data = nonCompliant.map(r => [
+    r.employeeNumber, r.employeeName, r.payType, r.age,
+    r.effectiveHourlyRate, r.requiredNMWRate, "❌ No",
+    r.location, r.shortfall, r.division
+  ]);
+  
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  if (data.length > 0) {
+    sheet.getRange(2, 1, data.length, headers.length).setValues(data);
+  }
+  
+  // Add summary information
+  const summaryRow = data.length + 3;
+  sheet.getRange(summaryRow, 1).setValue(`Summary: ${nonCompliant.length} non-compliant employees found`);
+  sheet.getRange(summaryRow + 1, 1).setValue(`Total checked: ${batchResult.payrollEmployees} payroll employees`);
+  sheet.getRange(summaryRow + 2, 1).setValue(`Processed: ${new Date().toLocaleString()}`);
+}
+
+// === UI Support Functions ===
+
+/**
+ * Gets all available filter options for the NMW compliance UI.
+ * @returns {Object} Filter options for UI components
+ */
+function getNMWFilterOptions() {
+  try {
+    const baseOptions = getAllFilterOptionsForModal();
+    
+    return {
+      ...baseOptions,
+      staffType: ["Salaried", "Hourly"],
+      reportFormat: [
+        { value: REPORT_FORMATS.SUMMARY, label: "Summary Report" },
+        { value: REPORT_FORMATS.DETAILED, label: "Detailed Report" },
+        { value: REPORT_FORMATS.AUDIT, label: "Audit Report" }
+      ],
+      outputDestination: [
+        { value: OUTPUT_DESTINATIONS.SHEET, label: "New Sheet" },
+        { value: OUTPUT_DESTINATIONS.DRIVE, label: "Drive File" },
+        { value: OUTPUT_DESTINATIONS.JSON, label: "JSON Data" }
+      ],
+      _metadata: {
+        totalEmployees: getAllEmployees().length,
+        activePayrollEmployees: getActivePayrollEmployees().length,
+        lastUpdated: new Date()
+      }
+    };
+
+  } catch (error) {
+    console.error("Failed to get NMW filter options:", error.message);
+    return {
+      error: error.message,
+      location: [],
+      division: [],
+      payType: [],
+      status: []
+    };
+  }
+}
+
+/**
+ * Legacy function for sidebar compatibility.
+ * @returns {Array<string>} Array of unique location names
+ */
+function getSidebarLocationOptions() {
+  try {
+    return listUniqueLocations();
+  } catch (error) {
+    console.error("Failed to get sidebar location options:", error.message);
+    return [];
+  }
+}
+
+/**
+ * Validates filter criteria before processing.
+ * @param {Object} filters - Filter criteria to validate
+ * @returns {Object} Validation result
+ */
+function validateNMWFilters(filters) {
+  const validation = {
+    isValid: true,
+    errors: [],
+    warnings: []
+  };
+
+  try {
+    const filterOptions = getNMWFilterOptions();
+
+    // Validate each filter
+    Object.entries(filters).forEach(([key, value]) => {
+      if (filterOptions[key] && Array.isArray(filterOptions[key]) && !filterOptions[key].includes(value)) {
+        validation.errors.push(`Invalid ${key}: ${value}`);
+        validation.isValid = false;
+      }
+    });
+
+    // Check employee count
+    if (validation.isValid) {
+      const matchCount = getEmployeeMatchCount(filters);
+      if (matchCount === 0) {
+        validation.warnings.push("No employees match the selected criteria");
+      } else {
+        validation.warnings.push(`${matchCount} employees match the criteria`);
+      }
+    }
+
+    return validation;
+
+  } catch (error) {
+    return {
+      isValid: false,
+      errors: [`Validation failed: ${error.message}`],
+      warnings: []
+    };
+  }
+}
+
+/**
+ * Gets preview information for filters without running full compliance check.
+ * @param {Object} filters - Filter criteria to preview
+ * @returns {Object} Preview information
+ */
+function previewNMWCheckScope(filters) {
+  try {
+    const allMatches = getEmployeesMatchingFilters(filters);
+    const payrollMatches = allMatches.filter(emp => 
+      emp.Status?.toLowerCase() === "current" && 
+      emp.IsPayrollEmployee?.toLowerCase() === "yes"
+    );
+
+    return {
+      success: true,
+      totalEmployees: allMatches.length,
+      payrollEmployees: payrollMatches.length,
+      estimatedProcessingTime: _estimateProcessingTime(payrollMatches.length),
+      filters: filters
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Shows the enhanced NMW compliance sidebar UI.
+ */
+function showEnhancedNMWComplianceSidebar() {
+  try {
+    const html = HtmlService.createHtmlOutputFromFile('04_nmwEnhancedSidebar')
+      .setTitle("NMW Compliance Checker")
+      .setWidth(350);
+    
+    SpreadsheetApp.getUi().showSidebar(html);
+    return { success: true };
+
+  } catch (error) {
+    console.error("Failed to show enhanced sidebar:", error.message);
+    showNMWLocationSidebar();
+    return { success: true, warning: "Using legacy interface" };
+  }
+}
+
+/**
+ * Shows the legacy location-based sidebar.
+ */
+function showNMWLocationSidebar() {
+  const html = HtmlService.createHtmlOutputFromFile('04_nmwSidebar')
+    .setTitle("NMW Compliance Checker")
+    .setWidth(300);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+// === System Validation ===
+
+/**
+ * Validates NMW system configuration.
+ * @returns {Object} Validation results
+ */
+function validateNMWConfiguration() {
+  const issues = [];
+  
+  try {
+    const bands = loadNMWConfiguration();
+    
+    bands.forEach((band, index) => {
+      Object.entries(band.bands).forEach(([ageGroup, rate]) => {
+        if (!rate || rate <= 0) {
+          issues.push({
+            type: 'zero_rate',
+            staffType: band.staffType,
+            ageGroup: ageGroup,
+            effectiveFrom: band.effectiveFrom
+          });
+        }
+      });
+    });
+    
+    return {
+      isValid: issues.length === 0,
+      issues: issues,
+      totalBands: bands.length,
+      summary: `${issues.length} configuration issues found`
+    };
+    
+  } catch (error) {
+    return {
+      isValid: false,
+      issues: [{ type: 'config_error', error: error.message }],
+      summary: `Configuration error: ${error.message}`
+    };
+  }
+}
+
+/**
+ * Gets system health status for UI components.
+ * @returns {Object} System health information
+ */
+function getNMWSystemHealth() {
+  try {
+    const health = {
+      overall: 'healthy',
+      components: {},
+      lastChecked: new Date()
+    };
+
+    // Check employee directory
+    try {
+      const employeeCount = getAllEmployees().length;
+      health.components.employeeDirectory = {
+        status: 'healthy',
+        message: `${employeeCount} employees loaded`
+      };
+    } catch (error) {
+      health.components.employeeDirectory = {
+        status: 'error',
+        message: error.message
+      };
+      health.overall = 'degraded';
+    }
+
+    // Check NMW configuration
+    try {
+      const configValidation = validateNMWConfiguration();
+      health.components.nmwConfiguration = {
+        status: configValidation.isValid ? 'healthy' : 'warning',
+        message: configValidation.summary
+      };
+      if (!configValidation.isValid) {
+        health.overall = 'degraded';
+      }
+    } catch (error) {
+      health.components.nmwConfiguration = {
+        status: 'error',
+        message: error.message
+      };
+      health.overall = 'error';
+    }
+
+    // Check payroll calendar
+    try {
+      const calendar = getPayrollCalendar();
+      health.components.payrollCalendar = {
+        status: 'healthy',
+        message: `${calendar.length} pay periods available`
+      };
+    } catch (error) {
+      health.components.payrollCalendar = {
+        status: 'error',
+        message: error.message
+      };
+      health.overall = 'error';
+    }
+
+    return health;
+
+  } catch (error) {
+    return {
+      overall: 'error',
+      error: error.message,
+      lastChecked: new Date()
+    };
+  }
+}
+
+// === Helper Functions ===
+
+/**
+ * Estimates processing time based on employee count.
+ * @param {number} employeeCount - Number of employees to process
+ * @returns {string} Human-readable time estimate
+ * @private
+ */
+function _estimateProcessingTime(employeeCount) {
+  const baseTime = 2; // seconds
+  const perEmployeeTime = 0.1; // 100ms per employee
+  const estimatedSeconds = baseTime + (employeeCount * perEmployeeTime);
+  
+  if (estimatedSeconds < 10) {
+    return "Less than 10 seconds";
+  } else if (estimatedSeconds < 60) {
+    return `About ${Math.round(estimatedSeconds)} seconds`;
+  } else {
+    const minutes = Math.round(estimatedSeconds / 60);
+    return `About ${minutes} minute${minutes > 1 ? 's' : ''}`;
+  }
+}
+
+// === Testing Functions ===
+
+/**
+ * Comprehensive test suite for the NMW compliance module.
+ */
+function testNMWCompliance() {
+  console.log("=== NMW Compliance Module Test ===");
+  
+  const testResults = {
+    configuration: false,
+    employeeCompliance: false,
+    batchProcessing: false,
+    uiFunctions: false
+  };
+  
+  try {
+    // Test 1: Configuration loading
+    console.log("1. Testing configuration loading...");
+    try {
+      const config = loadNMWConfiguration();
+      console.log(`✅ Loaded ${config.length} rate bands`);
+      testResults.configuration = true;
+    } catch (error) {
+      console.error(`❌ Configuration test failed: ${error.message}`);
+    }
+    
+    // Test 2: Employee compliance (only if config loaded)
+    console.log("2. Testing employee compliance...");
+    if (testResults.configuration) {
+      try {
+        const employees = getActivePayrollEmployees();
+        if (employees.length > 0) {
+          const result = checkEmployeeNMWCompliance(employees[0]);
+          if (result.success) {
+            console.log(`✅ Compliance check successful for employee ${result.employeeNumber}`);
+            testResults.employeeCompliance = true;
+          } else {
+            console.log(`⚠️ Compliance check had issues: ${result.error}`);
+          }
+        } else {
+          console.log("⚠️ No active payroll employees found for testing");
+        }
+      } catch (error) {
+        console.error(`❌ Employee compliance test failed: ${error.message}`);
+      }
+    } else {
+      console.log("⏭️ Skipping employee compliance test (config failed)");
+    }
+    
+    // Test 3: Batch processing (only if previous tests passed)
+    console.log("3. Testing batch processing...");
+    if (testResults.configuration && testResults.employeeCompliance) {
+      try {
+        const batchResult = runNMWComplianceCheck(
+          { payType: "Hourly" },
+          { includeCompliant: true, outputFormat: REPORT_FORMATS.SUMMARY, destination: OUTPUT_DESTINATIONS.JSON }
+        );
+        console.log(`✅ Batch processing: ${batchResult.results.length} results processed`);
+        testResults.batchProcessing = true;
+      } catch (error) {
+        console.error(`❌ Batch processing test failed: ${error.message}`);
+      }
+    } else {
+      console.log("⏭️ Skipping batch processing test (dependencies failed)");
+    }
+    
+    // Test 4: UI functions
+    console.log("4. Testing UI functions...");
+    try {
+      const filterOptions = getNMWFilterOptions();
+      if (filterOptions.error) {
+        console.log(`⚠️ Filter options returned error: ${filterOptions.error}`);
+      } else {
+        console.log(`✅ Filter options: ${Object.keys(filterOptions).length} categories`);
+        testResults.uiFunctions = true;
+      }
+    } catch (error) {
+      console.error(`❌ UI functions test failed: ${error.message}`);
+    }
+    
+    // Overall result
+    const passedTests = Object.values(testResults).filter(Boolean).length;
+    const totalTests = Object.keys(testResults).length;
+    
+    console.log("\n=== Test Summary ===");
+    console.log(`✅ Passed: ${passedTests}/${totalTests} tests`);
+    
+    if (passedTests === totalTests) {
+      console.log("🎉 All tests passed! NMW compliance system is working correctly.");
+    } else {
+      console.log("\n🔧 Some tests failed. Check the individual test results above.");
+    }
+    
+    return {
+      success: passedTests === totalTests,
+      results: testResults,
+      passedTests: passedTests,
+      totalTests: totalTests
+    };
+    
+  } catch (error) {
+    console.error("❌ Test suite failed:", error.message);
+    return { success: false, error: error.message };
+  }
+}
