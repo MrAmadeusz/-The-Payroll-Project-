@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Roboto, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 1.5em;
+      margin-bottom: 0.5em;
+    }
+    .report-group {
+      margin-bottom: 2em;
+    }
+    .report-card {
+      border: 1px solid #ccc;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+    .report-card h3 {
+      margin: 0 0 0.2em 0;
+    }
+    .button-group {
+      margin-top: 6px;
+      display: flex;
+      gap: 8px;
+    }
+    .download-btn {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .send-btn {
+      background-color: #34a853;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .download-btn:hover {
+      background-color: #3367d6;
+    }
+    .send-btn:hover {
+      background-color: #2d8f47;
+    }
+    .download-btn:disabled, .send-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    .status-message {
+      margin-top: 8px;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 Reports Dashboard</h1>
+  <div id="reportContainer">Loading reports...</div>
+
+  <script>
+    google.script.run.withSuccessHandler(renderReports).getAvailableReportsForUser();
+
+    function renderReports(reportGroups) {
+  const container = document.getElementById('reportContainer');
+  container.innerHTML = '';
+
+  for (const [groupName, reports] of Object.entries(reportGroups)) {
+    const group = document.createElement('div');
+    group.className = 'report-group';
+    const header = document.createElement('h2');
+    header.textContent = groupName;
+    group.appendChild(header);
+
+    reports.forEach(report => {
+      const card = document.createElement('div');
+      card.className = 'report-card';
+
+      const title = document.createElement('h3');
+      title.textContent = report.name;
+      card.appendChild(title);
+
+      const desc = document.createElement('p');
+      desc.textContent = report.description;
+      card.appendChild(desc);
+
+      const buttonGroup = document.createElement('div');
+      buttonGroup.className = 'button-group';
+
+      // Download button
+      const downloadBtn = document.createElement('button');
+      downloadBtn.className = 'download-btn';
+      downloadBtn.textContent = '📥 Download';
+      downloadBtn.onclick = () => {
+        if (report.isInteractive) {
+          google.script.run.showReportBuilderModal();
+        } else {
+          runReport(report.key, 'download', downloadBtn, card);
+        }
+      };
+      buttonGroup.appendChild(downloadBtn);
+
+      // Send button (only for non-interactive reports)
+      if (!report.isInteractive) {
+        const sendBtn = document.createElement('button');
+        sendBtn.className = 'send-btn';
+        sendBtn.textContent = '📧 Send to Recipients';
+        sendBtn.onclick = () => runReport(report.key, 'send', sendBtn, card);
+        buttonGroup.appendChild(sendBtn);
+      }
+
+      card.appendChild(buttonGroup);
+      group.appendChild(card);
+    });
+
+    container.appendChild(group);
+  }
+}
+
+    function runReport(reportKey, mode, button, card) {
+      // Disable both buttons in this card
+      const buttons = card.querySelectorAll('.download-btn, .send-btn');
+      buttons.forEach(btn => {
+        btn.disabled = true;
+        if (btn === button) {
+          btn.textContent = mode === 'download' ? '⏳ Generating...' : '⏳ Sending...';
+        }
+      });
+
+      // Remove any existing status messages
+      const existingStatus = card.querySelector('.status-message');
+      if (existingStatus) {
+        existingStatus.remove();
+      }
+
+      google.script.run
+        .withSuccessHandler(result => handleSuccess(result, mode, card, buttons))
+        .withFailureHandler(error => handleError(error, card, buttons))
+        .runReportWithMode(reportKey, mode);
+    }
+
+    function handleSuccess(result, mode, card, buttons) {
+      // Re-enable buttons
+      buttons.forEach(btn => {
+        btn.disabled = false;
+        if (btn.classList.contains('download-btn')) {
+          btn.textContent = '📥 Download';
+        } else {
+          btn.textContent = '📧 Send to Recipients';
+        }
+      });
+
+      // Show success message
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'status-message success';
+      
+      if (mode === 'download') {
+        statusDiv.innerHTML = `✅ ${result.message}<br><a href="${result.url}" target="_blank">Open Report</a>`;
+      } else {
+        statusDiv.innerHTML = `✅ ${result.message}<br>Report shared with ${result.recipients} recipient(s)`;
+      }
+      
+      card.appendChild(statusDiv);
+
+      // Clear message after 10 seconds
+      setTimeout(() => {
+        if (statusDiv.parentNode) {
+          statusDiv.remove();
+        }
+      }, 10000);
+    }
+
+    function handleError(error, card, buttons) {
+      // Re-enable buttons
+      buttons.forEach(btn => {
+        btn.disabled = false;
+        if (btn.classList.contains('download-btn')) {
+          btn.textContent = '📥 Download';
+        } else {
+          btn.textContent = '📧 Send to Recipients';
+        }
+      });
+
+      // Show error message
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'status-message error';
+      statusDiv.textContent = `❌ Error: ${error.message}`;
+      card.appendChild(statusDiv);
+
+      // Clear message after 10 seconds
+      setTimeout(() => {
+        if (statusDiv.parentNode) {
+          statusDiv.remove();
+        }
+      }, 10000);
+    }
+  </script>
+</body>
+</html>
