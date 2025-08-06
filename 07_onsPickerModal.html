@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      html, body {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Roboto, sans-serif;
+        background: #f9f9f9;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        box-sizing: border-box;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 800px;
+        padding: 2em;
+        box-sizing: border-box;
+      }
+
+      h3 {
+        margin-top: 0;
+        margin-bottom: 1.2em;
+        font-weight: 500;
+        color: #222;
+        font-size: 1.5em;
+        text-align: center;
+      }
+
+      label {
+        display: block;
+        margin-top: 1em;
+        margin-bottom: 0.3em;
+        font-weight: 500;
+      }
+
+      select, button {
+        width: 100%;
+        padding: 0.6em 0.8em;
+        font-size: 1em;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+      }
+
+      button {
+        margin-top: 2em;
+        background-color: #0066cc;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      button:hover {
+        background-color: #0052a3;
+      }
+
+      .result-box {
+        margin-top: 2em;
+        background: white;
+        border: 1px solid #ddd;
+        border-left: 4px solid #2196F3;
+        padding: 1em;
+        border-radius: 6px;
+        font-size: 0.95em;
+        white-space: pre-line;
+      }
+
+      .error-box {
+        border-left-color: #f44336;
+        color: #b71c1c;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>📊 ONS Monthly Report</h3>
+
+      <label for="year">Financial Year</label>
+      <select id="year"></select>
+
+      <label for="fm">Financial Month</label>
+      <select id="fm">
+        <option value="1">01 – April</option>
+        <option value="2">02 – May</option>
+        <option value="3">03 – June</option>
+        <option value="4">04 – July</option>
+        <option value="5">05 – August</option>
+        <option value="6">06 – September</option>
+        <option value="7">07 – October</option>
+        <option value="8">08 – November</option>
+        <option value="9">09 – December</option>
+        <option value="10">10 – January</option>
+        <option value="11">11 – February</option>
+        <option value="12">12 – March</option>
+      </select>
+
+      <button onclick="run()">Run Report</button>
+
+      <div id="resultBox"></div>
+    </div>
+
+    <script>
+      function populateYearsCurrentAndPrevious() {
+  const yearSelect = document.getElementById('year');
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear, currentYear - 1];
+
+  years.forEach(year => {
+    const option = document.createElement('option');
+    option.value = year;
+    option.textContent = year;
+    yearSelect.appendChild(option);
+  });
+
+  yearSelect.value = currentYear;
+}
+
+      function run() {
+        const year = +document.getElementById('year').value;
+        const fmMonth = +document.getElementById('fm').value;
+        const box = document.getElementById('resultBox');
+        box.innerHTML = "⏳ Running report...";
+
+        google.script.run
+          .withSuccessHandler(result => {
+            if (result.success) {
+              box.className = "result-box";
+              box.innerHTML = result.message;
+            } else {
+              box.className = "result-box error-box";
+              box.innerHTML = result.message;
+            }
+          })
+          .runONSReport(year, fmMonth);
+      }
+
+     populateYearsCurrentAndPrevious();
+
+    </script>
+  </body>
+</html>
