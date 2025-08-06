@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body {
+      font-family: Roboto, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
+    select, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+    .preview-table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .preview-table th, .preview-table td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      font-size: 13px;
+    }
+    .preview-table th {
+      background-color: #f0f0f0;
+    }
+    .button-row {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📋 Build Your Custom Employee View</h1>
+
+  <label for="locationSelect">Location</label>
+  <select id="locationSelect">
+    <option value="">-- All Locations --</option>
+  </select>
+
+  <label for="divisionSelect">Division</label>
+  <select id="divisionSelect">
+    <option value="">-- All Divisions --</option>
+  </select>
+
+  <label for="statusSelect">Status</label>
+  <select id="statusSelect">
+    <option value="">-- All Statuses --</option>
+  </select>
+
+  <label for="payTypeSelect">Pay Type</label>
+  <select id="payTypeSelect">
+    <option value="">-- All Pay Types --</option>
+  </select>
+
+  <label for="columnPicker">Select Columns</label>
+  <select id="columnPicker" multiple size="6"></select>
+
+  <div class="button-row">
+    <button onclick="refreshPreview()">🔄 Preview</button>
+    <button onclick="exportView('download')">📅 Download</button>
+    <button onclick="exportView('send')">📧 Send to Recipients</button>
+  </div>
+
+  <table class="preview-table" id="previewTable"></table>
+
+  <script>
+    let allEmployees = [];
+    let allFields = [];
+
+    google.script.run.withSuccessHandler(init).getAllEmployees();
+
+    function init(data) {
+      allEmployees = data;
+      allFields = Object.keys(data[0] || {});
+
+      populateDropdown('locationSelect', extractUnique(data, 'Location'));
+      populateDropdown('divisionSelect', extractUnique(data, 'Division'));
+      populateDropdown('statusSelect', extractUnique(data, 'Status'));
+      populateDropdown('payTypeSelect', extractUnique(data, 'Pay Type'));
+      populateColumnPicker(allFields);
+    }
+
+    function populateDropdown(id, values) {
+      const select = document.getElementById(id);
+      values.forEach(val => {
+        const option = document.createElement('option');
+        option.value = val;
+        option.textContent = val;
+        select.appendChild(option);
+      });
+    }
+
+    function populateColumnPicker(columns) {
+      const picker = document.getElementById('columnPicker');
+      columns.forEach(col => {
+        const option = document.createElement('option');
+        option.value = col;
+        option.textContent = col;
+        picker.appendChild(option);
+      });
+    }
+
+    function getSelectedColumns() {
+      return Array.from(document.getElementById('columnPicker').selectedOptions)
+                  .map(opt => opt.value);
+    }
+
+    function getFilters() {
+      return {
+        Location: document.getElementById('locationSelect').value,
+        Division: document.getElementById('divisionSelect').value,
+        Status: document.getElementById('statusSelect').value,
+        'Pay Type': document.getElementById('payTypeSelect').value
+      };
+    }
+
+    function refreshPreview() {
+      const filters = getFilters();
+      const columns = getSelectedColumns();
+      const options = { filters, columns };
+
+      google.script.run.withSuccessHandler(preview => {
+        console.log('📦 Preview result:', preview);
+        renderPreview(preview);
+      })
+      .withFailureHandler(error => {
+        document.getElementById('previewTable').innerHTML =
+          `<tr><td colspan="99">❌ Failed to load preview: ${error.message}</td></tr>`;
+      })
+      .previewFilteredEmployeeView(options);
+    }
+
+    function renderPreview(rows) {
+      const table = document.getElementById('previewTable');
+      table.innerHTML = '';
+
+      if (!rows || !Array.isArray(rows) || rows.length === 0) {
+        table.innerHTML = '<tr><td colspan="99">⚠️ No data to display.</td></tr>';
+        return;
+      }
+
+      const headerRow = document.createElement('tr');
+      rows[0].forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        headerRow.appendChild(th);
+      });
+      table.appendChild(headerRow);
+
+      rows.slice(1, 21).forEach(row => {
+        const tr = document.createElement('tr');
+        row.forEach(cell => {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+    }
+
+    function exportView(mode) {
+      const filters = getFilters();
+      const columns = getSelectedColumns();
+      const options = { filters, columns };
+      google.script.run.runEmployeeReportBuilder(options, mode);
+    }
+
+    function extractUnique(data, field) {
+      const set = new Set();
+      data.forEach(row => {
+        const val = row[field];
+        if (val) set.add(val);
+      });
+      return Array.from(set).sort();
+    }
+  </script>
+</body>
+</html>
