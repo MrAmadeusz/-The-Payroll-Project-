@@ -1,0 +1,161 @@
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        padding: 24px;
+        background: #f9fafb;
+        color: #111827;
+      }
+      h2 {
+        margin-top: 0;
+      }
+      .add-button {
+        margin-bottom: 16px;
+        padding: 10px 16px;
+        background-color: #10b981;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .add-button:hover {
+        background-color: #059669;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      th {
+        background: #f3f4f6;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 8px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      td {
+        text-align: center;
+        padding: 6px;
+        font-size: 12px;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .timeline-cell {
+        padding: 0;
+        height: 26px;
+        vertical-align: middle;
+      }
+      .bar {
+        height: 14px;
+        width: 90%;
+        margin: 0 auto;
+        border-radius: 4px;
+        opacity: 0.9;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+      }
+      .Annual-Leave { background-color: #3b82f6; color: white; }
+      .Sick { background-color: #ef4444; color: white; }
+      .Training { background-color: #facc15; color: black; }
+      .Parental { background-color: #a78bfa; color: white; }
+      .TOIL { background-color: #6b7280; color: white; }
+      .Unpaid { background-color: #fb923c; color: white; }
+      .bar.clash { box-shadow: 0 0 0 2px red inset; }
+    </style>
+  </head>
+  <body>
+    <h2>🗓️ Team Absence Planner</h2>
+    <button class="add-button" onclick="showAddForm()">➕ Add Absence</button>
+    <div id="absence-table">Loading...</div>
+
+    <script>
+      const today = new Date();
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+
+      const leaveTypes = ["Annual Leave", "Sick", "Training", "Parental", "TOIL", "Unpaid"];
+      const teamMembers = ["Jan Fish", "Dan Nixdorf", "Rachel Hill"];
+
+      function fetchData() {
+        google.script.run.withSuccessHandler(renderTable).getTeamAbsenceData();
+      }
+
+      function renderTable(data) {
+        google.script.run.withSuccessHandler(clashes => {
+          const container = document.getElementById('absence-table');
+          const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+          const clashPairs = new Set(
+            clashes.flatMap(c => [JSON.stringify(c.a), JSON.stringify(c.b)])
+          );
+
+          const headerRow = '<tr><th>Name</th><th>Type</th><th>Dates</th>' +
+            Array.from({ length: daysInMonth }, (_, d) => `<th>${d + 1}</th>`).join('') + '</tr>';
+
+          const rows = data.map(entry => {
+            const start = new Date(entry.startDate);
+            const end = new Date(entry.endDate);
+            const bar = Array.from({ length: daysInMonth }, (_, i) => {
+              const day = new Date(currentYear, currentMonth, i + 1);
+              if (day >= start && day <= end) {
+                const isClash = clashPairs.has(JSON.stringify(entry));
+                return `<td class="timeline-cell"><div class="bar ${entry.type.replace(/\s+/g, '-')} ${isClash ? 'clash' : ''}" title="${entry.name}: ${entry.type}"></div></td>`;
+              } else {
+                return '<td class="timeline-cell"></td>';
+              }
+            }).join('');
+
+            return `
+              <tr>
+                <td>${entry.name}</td>
+                <td>${entry.type}</td>
+                <td>${entry.startDate} → ${entry.endDate}</td>
+                ${bar}
+              </tr>`;
+          });
+
+          container.innerHTML = `
+            <table>
+              <thead>${headerRow}</thead>
+              <tbody>${rows.join('')}</tbody>
+            </table>
+          `;
+        }).detectAbsenceClashes(data);
+      }
+
+      function showAddForm() {
+        const name = promptDropdown("Select Person", teamMembers);
+        if (!name) return;
+        const type = promptDropdown("Select Absence Type", leaveTypes);
+        if (!type) return;
+        const startDate = prompt("Start Date (YYYY-MM-DD)");
+        if (!startDate) return;
+        const endDate = prompt("End Date (YYYY-MM-DD)");
+        if (!endDate) return;
+        const entry = { name, type, startDate, endDate };
+        google.script.run.withSuccessHandler(fetchData).addNewAbsence(entry);
+      }
+
+      function promptDropdown(title, options) {
+        const selectHtml = `
+          <label>${title}:</label>
+          <select id="dropdown-select">
+            ${options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+          </select>`;
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = selectHtml;
+        const select = wrapper.querySelector("select");
+
+        const confirmed = confirm(`${title}:\n\n${options.join("\n")}`);
+        if (confirmed) return select.value;
+        return null;
+      }
+
+      fetchData();
+    </script>
+  </body>
+</html>
