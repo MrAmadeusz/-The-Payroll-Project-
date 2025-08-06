@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <title>Enhanced Maternity Case Details</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .modal-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            position: relative;
+        }
+        
+        .modal-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .modal-header .subtitle {
+            margin: 5px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        
+        .close-btn:hover {
+            opacity: 1;
+        }
+        
+        .modal-body {
+            padding: 0;
+        }
+        
+        /* Enhanced Case Overview Section */
+        .case-overview {
+            padding: 30px;
+            border-bottom: 1px solid #e9ecef;
+            background: #f8f9fa;
+        }
+        
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .info-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #495057;
+            font-weight: 600;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #6c757d;
+        }
+        
+        .info-value {
+            color: #495057;
+        }
+        
+        .return-status {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            margin-top: 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .return-status h3 {
+            margin: 0 0 15px 0;
+            color: #495057;
+        }
+        
+        .return-date-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* Enhanced Financial Summary with CMP Tracking */
+        .financial-summary {
+            padding: 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        
+        .financial-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .financial-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .financial-card h4 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .financial-amount {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .smp-card .financial-amount {
+            color: #007bff;
+        }
+        
+        .cmp-card .financial-amount {
+            color: #28a745;
+        }
+        
+        .holiday-card .financial-amount {
+            color: #ffc107;
+        }
+        
+        .progress-card .financial-amount {
+            color: #17a2b8;
+        }
+        
+        .financial-breakdown {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+            margin: 10px auto;
+        }
+        
+        .progress-ring circle {
+            fill: transparent;
+            stroke: #e9ecef;
+            stroke-width: 4;
+        }
+        
+        .progress-ring .progress {
+            stroke: #28a745;
+            stroke-dasharray: 0 251;
+            stroke-dashoffset: 0;
+            transition: stroke-dasharray 0.3s;
+        }
+        
+        /* Enhanced CMP Tracking Section */
+        .cmp-tracking {
+            padding: 30px;
+            background: #f0f8ff;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .cmp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .cmp-progress {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .cmp-bar {
+            width: 200px;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .cmp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 0.3s;
+        }
+        
+        .cmp-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .cmp-detail-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #b3d9ff;
+        }
+        
+        /* Period Tabs */
+        .period-section {
+            padding: 30px;
+        }
+        
+        .period-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+            overflow-x: auto;
+        }
+        
+        .period-tab {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-bottom: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6c757d;
+            margin-right: 2px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            position: relative;
+        }
+        
+        .period-tab.active {
+            background: white;
+            color: #007bff;
+            border-color: #007bff;
+        }
+        
+        .period-tab:hover {
+            background: white;
+            color: #007bff;
+        }
+        
+        .period-tab .tab-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .period-content {
+            display: none;
+        }
+        
+        .period-content.active {
+            display: block;
+        }
+        
+        .period-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: box-shadow 0.2s;
+        }
+        
+        .period-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .period-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .period-title {
+            font-weight: 600;
+            color: #495057;
+            font-size: 16px;
+        }
+        
+        .period-dates {
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .period-amounts {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .amount-box {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            position: relative;
+        }
+        
+        .amount-box.has-cmp {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+        }
+        
+        .amount-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .amount-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .amount-box.has-cmp .amount-value {
+            color: #28a745;
+        }
+        
+        .cmp-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .period-notes {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+        
+        .period-notes.cmp-notes {
+            background: #e8f5e8;
+            border: 1px solid #c3e6c3;
+        }
+        
+        .period-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-complete {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        /* Actions Section */
+        .actions-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            text-align: center;
+        }
+        
+        .actions-section .btn {
+            margin: 0 10px;
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        
+        /* Modal overlays */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-dialog {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .text-muted {
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-container">
+        <div class="modal-header">
+            <button class="close-btn" onclick="google.script.host.close()" title="Close">&times;</button>
+            <h1>👤 <?= periodData.case.employeeName ?></h1>
+            <div class="subtitle">Enhanced Maternity Case #<?= periodData.case.caseId ?> • Employee #<?= periodData.case.employeeId ?> • Pay Type: <?= periodData.case.employeePayType ?></div>
+        </div>
+
+        <div class="modal-body">
+            <!-- Enhanced Case Overview Section -->
+            <div class="case-overview">
+                <div class="overview-grid">
+                    <div class="info-section">
+                        <h3>📋 Employee Information</h3>
+                        <div class="info-item">
+                            <span class="info-label">Employee Number:</span>
+                            <span class="info-value"><?= periodData.case.employeeId ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Location:</span>
+                            <span class="info-value"><?= periodData.case.employeeLocation ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Pay Type:</span>
+                            <span class="info-value"><?= periodData.case.employeePayType ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Case Status:</span>
+                            <span class="info-value"><?= periodData.case.status.charAt(0).toUpperCase() + periodData.case.status.slice(1) ?></span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>📅 Key Dates</h3>
+                        <div class="info-item">
+                            <span class="info-label">Baby Due Date:</span>
+                            <span class="info-value"><?= Utilities.formatDate(new Date(periodData.case.babyDueDate), Session.getScriptTimeZone(), 'dd MMM yyyy') ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">SMP Start Date:</span>
+                            <span class="info-value"><?= Utilities.formatDate(new Date(periodData.case.smpStartDate), Session.getScriptTimeZone(), 'dd MMM yyyy') ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">SMP Ends (Week 39):</span>
+                            <span class="info-value"><?= Utilities.formatDate(new Date(periodData.displayData.week39EndDate), Session.getScriptTimeZone(), 'dd MMM yyyy') ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Max Leave (Week 52):</span>
+                            <span class="info-value"><?= Utilities.formatDate(new Date(periodData.displayData.week52EndDate), Session.getScriptTimeZone(), 'dd MMM yyyy') ?></span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h3>💼 CMP Configuration</h3>
+                        <div class="info-item">
+                            <span class="info-label">Average Weekly:</span>
+                            <span class="info-value">£<?= (periodData.case.averageWeeklyEarnings || 0).toLocaleString() ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Contracted Weekly:</span>
+                            <span class="info-value">£<?= (periodData.case.contractedWeeklyEarnings || 0).toLocaleString() ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Target Weekly:</span>
+                            <span class="info-value">£<?= (periodData.case.targetWeeklyAmount || 0).toLocaleString() ?></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">CMP Entitlement:</span>
+                            <span class="info-value"><?= periodData.case.cmpWeeks || 8 ?> weeks (<?= (periodData.case.cmpWeeks || 8) * 7 ?> days)</span>
+                        </div>
+                    </div>
+
+                    <!-- Return Status Section -->
+                    <div class="return-status">
+                        <h3>🎯 Return Status</h3>
+                        <div class="info-item">
+                            <span class="info-label">Expected Return:</span>
+                            <span class="info-value"><?= Utilities.formatDate(new Date(periodData.case.expectedReturnDate), Session.getScriptTimeZone(), 'dd MMM yyyy') ?></span>
+                        </div>
+                        <div class="return-date-section">
+                            <span class="info-label">Actual Return:</span>
+                            <? if (periodData.case.actualReturnDate) { ?>
+                                <span class="info-value"><?= Utilities.formatDate(new Date(periodData.case.actualReturnDate), Session.getScriptTimeZone(), 'dd MMM yyyy') ?></span>
+                                <span class="status-badge status-complete">✅ Returned</span>
+                            <? } else { ?>
+                                <span class="text-muted">Not Set</span>
+                                <button class="btn btn-primary" onclick="showReturnDateModal()">📝 Set Return Date</button>
+                            <? } ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Financial Summary -->
+            <div class="financial-summary">
+                <h3 style="margin-bottom: 20px; color: #495057;">💰 Financial Summary <span id="financialPeriodLabel">(All Periods)</span></h3>
+                <div class="financial-grid">
+                    <div class="financial-card smp-card">
+                        <h4>📊 Statutory Maternity Pay (SMP)</h4>
+                        <div class="financial-amount">£<span id="smpTotal"><?= (periodData.displayData.totalSMP || 0).toLocaleString() ?></span></div>
+                        <div class="financial-breakdown">
+                            Paid: £<span id="smpPaid"><?= (periodData.displayData.totalSMPPaid || 0).toLocaleString() ?></span><br>
+                            Remaining: £<span id="smpRemaining"><?= (periodData.displayData.smpRemaining || 0).toLocaleString() ?></span>
+                        </div>
+                    </div>
+
+                    <div class="financial-card cmp-card">
+                        <h4>💼 Company Maternity Pay (CMP)</h4>
+                        <div class="financial-amount">£<span id="cmpTotal"><?= (periodData.displayData.totalCMP || 0).toLocaleString() ?></span></div>
+                        <div class="financial-breakdown">
+                            Paid: £<span id="cmpPaid"><?= (periodData.displayData.totalCMPPaid || 0).toLocaleString() ?></span><br>
+                            Days: <span id="cmpDays"><?= periodData.displayData.cmpDaysUsed || 0 ?>/<?= periodData.displayData.cmpDaysTotal || 56 ?></span>
+                        </div>
+                    </div>
+
+                    <div class="financial-card holiday-card">
+                        <h4>🏖️ Holiday Accrual</h4>
+                        <div class="financial-amount"><span id="holidayTotal">TBC</span></div>
+                        <div class="financial-breakdown">
+                            <span class="text-muted">Calculation pending</span>
+                        </div>
+                    </div>
+
+                    <div class="financial-card progress-card">
+                        <h4>📈 Completion Progress</h4>
+                        <div class="progress-ring">
+                            <svg width="60" height="60">
+                                <circle cx="30" cy="30" r="25"></circle>
+                                <circle cx="30" cy="30" r="25" class="progress" id="progressCircle"></circle>
+                            </svg>
+                        </div>
+                        <div class="financial-breakdown">
+                            <span id="progressText"><?= periodData.displayData.periodsWithData || 0 ?>/<?= periodData.displayData.totalPeriods || 0 ?> periods</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced CMP Tracking Section -->
+            <? if (periodData.cmpSummary && periodData.cmpSummary.cmpDaysTotal > 0) { ?>
+            <div class="cmp-tracking">
+                <div class="cmp-header">
+                    <h3 style="margin: 0; color: #495057;">💼 Enhanced CMP Tracking</h3>
+                    <div class="cmp-progress">
+                        <span style="font-size: 14px; color: #6c757d;"><?= periodData.cmpSummary.cmpDaysUsed || 0 ?> of <?= periodData.cmpSummary.cmpDaysTotal || 56 ?> days used</span>
+                        <div class="cmp-bar">
+                            <div class="cmp-fill" style="width: <?= periodData.cmpSummary.cmpDaysTotal > 0 ? Math.round((periodData.cmpSummary.cmpDaysUsed / periodData.cmpSummary.cmpDaysTotal) * 100) : 0 ?>%"></div>
+                        </div>
+                        <span style="font-size: 14px; font-weight: 600; color: #28a745;">
+                            <?= periodData.cmpSummary.cmpDaysTotal > 0 ? Math.round((periodData.cmpSummary.cmpDaysUsed / periodData.cmpSummary.cmpDaysTotal) * 100) : 0 ?>%
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="cmp-details">
+                    <div class="cmp-detail-card">
+                        <strong>🎯 Target Rate</strong><br>
+                        <span style="font-size: 18px; color: #28a745;">£<?= (periodData.cmpSummary.targetWeeklyAmount || 0).toFixed(2) ?>/week</span><br>
+                        <small>£<?= ((periodData.cmpSummary.targetWeeklyAmount || 0) / 7).toFixed(2) ?>/day</small>
+                    </div>
+                    <div class="cmp-detail-card">
+                        <strong>💰 Total CMP Paid</strong><br>
+                        <span style="font-size: 18px; color: #28a745;">£<?= (periodData.cmpSummary.totalCMPPaid || 0).toLocaleString() ?></span><br>
+                        <small><?= periodData.cmpSummary.cmpPeriods ? periodData.cmpSummary.cmpPeriods.length : 0 ?> periods with CMP</small>
+                    </div>
+                    <div class="cmp-detail-card">
+                        <strong>📅 Days Remaining</strong><br>
+                        <span style="font-size: 18px; color: <?= periodData.cmpSummary.cmpDaysRemaining > 0 ? '#ffc107' : '#6c757d' ?>;">
+                            <?= periodData.cmpSummary.cmpDaysRemaining || 0 ?>
+                        </span><br>
+                        <small><?= periodData.cmpSummary.isComplete ? 'Entitlement complete' : 'Days available' ?></small>
+                    </div>
+                </div>
+                
+                <? if (periodData.cmpSummary.isComplete) { ?>
+                <div class="alert alert-info">
+                    <strong>ℹ️ CMP Complete:</strong> This employee has used their full CMP entitlement of <?= periodData.cmpSummary.cmpDaysTotal ?> days.
+                </div>
+                <? } ?>
+            </div>
+            <? } ?>
+
+            <!-- Enhanced Period Breakdown -->
+            <div class="period-section">
+                <h3 style="margin-bottom: 20px; color: #495057;">📅 Enhanced Period Breakdown</h3>
+                
+                <!-- Enhanced Period Tabs -->
+                <div class="period-tabs">
+                    <? periodData.periodTabs.forEach(function(tab, index) { ?>
+                        <? 
+                            // Find the FIRST period in this tab (earliest period number)
+                            var firstPeriodInTab = tab.periods.reduce(function(earliest, current) {
+                                return current.periodNumber < earliest.periodNumber ? current : earliest;
+                            }, tab.periods[0]);
+                            
+                            // For the calculation, we want to show amounts BEFORE this tab's first period
+                            var targetPeriodNumber = firstPeriodInTab.periodNumber;
+                            
+                            // Count periods needing attention in this tab
+                            var needsAttention = tab.periods.filter(function(p) { return !p.dataComplete; }).length;
+                        ?>
+                        <div class="period-tab <?= index === 0 ? 'active' : '' ?>" 
+                             onclick="showPeriodTab('<?= tab.tabId ?>', <?= targetPeriodNumber ?>, '<?= tab.monthName ?>')"
+                             data-tab-id="<?= tab.tabId ?>"
+                             data-period-number="<?= targetPeriodNumber ?>"
+                             data-tab-name="<?= tab.monthName ?>">
+                            <?= tab.monthName ?>
+                            <? if (tab.periodCount > 1) { ?>
+                                (<?= tab.periodCount ?>)
+                            <? } ?>
+                            <? if (needsAttention > 0) { ?>
+                                <span class="tab-badge" title="<?= needsAttention ?> periods need attention"><?= needsAttention ?></span>
+                            <? } ?>
+                        </div>
+                    <? }); ?>
+                </div>
+
+                <!-- Enhanced Period Content -->
+                <? periodData.periodTabs.forEach(function(tab, tabIndex) { ?>
+                    <div id="<?= tab.tabId ?>" class="period-content <?= tabIndex === 0 ? 'active' : '' ?>">
+                        <? tab.periods.forEach(function(period) { ?>
+                            <div class="period-card">
+                                <div class="period-header">
+                                    <div class="period-title">
+                                        Period <?= period.periodNumber ?>: <?= period.periodName ?>
+                                        <? if (period.companyAmount > 0) { ?>
+                                            <span class="tooltip" data-tooltip="This period includes CMP top-up">💼</span>
+                                        <? } ?>
+                                    </div>
+                                    <div class="period-dates">
+                                        <?= Utilities.formatDate(new Date(period.periodStart), Session.getScriptTimeZone(), 'dd MMM') ?> - 
+                                        <?= Utilities.formatDate(new Date(period.periodEnd), Session.getScriptTimeZone(), 'dd MMM yyyy') ?> • 
+                                        Pay: <?= Utilities.formatDate(new Date(period.payDate), Session.getScriptTimeZone(), 'dd MMM') ?>
+                                    </div>
+                                </div>
+
+                                <div class="period-amounts">
+                                    <div class="amount-box">
+                                        <div class="amount-label">SMP</div>
+                                        <div class="amount-value">£<?= (period.smpAmount || 0).toLocaleString() ?></div>
+                                    </div>
+                                    <div class="amount-box <?= period.companyAmount > 0 ? 'has-cmp' : '' ?>">
+                                        <div class="amount-label">CMP</div>
+                                        <div class="amount-value">£<?= (period.companyAmount || 0).toLocaleString() ?></div>
+                                        <? if (period.companyAmount > 0) { ?>
+                                            <div class="cmp-indicator">💼</div>
+                                        <? } ?>
+                                    </div>
+                                    <div class="amount-box">
+                                        <div class="amount-label">Holiday</div>
+                                        <div class="amount-value"><?= (period.holidayAccrued || 0) ?> days</div>
+                                    </div>
+                                </div>
+
+                                <? if (period.smpNotes || period.companyNotes || period.holidayNotes) { ?>
+                                    <div class="period-notes <?= period.companyNotes ? 'cmp-notes' : '' ?>">
+                                        <strong>Notes:</strong>
+                                        <? if (period.companyNotes) { ?>
+                                            <br><strong>CMP:</strong> <?= period.companyNotes ?>
+                                        <? } ?>
+                                        <? if (period.smpNotes) { ?>
+                                            <br><strong>SMP:</strong> <?= period.smpNotes ?>
+                                        <? } ?>
+                                        <? if (period.holidayNotes) { ?>
+                                            <br><strong>Holiday:</strong> <?= period.holidayNotes ?>
+                                        <? } ?>
+                                    </div>
+                                <? } ?>
+
+                                <div class="period-status">
+                                    <div>
+                                        <span class="status-badge <?= period.dataComplete ? 'status-complete' : 'status-pending' ?>">
+                                            <?= period.dataComplete ? '✅ Complete' : '⏳ Pending' ?>
+                                        </span>
+                                        <? if (period.enteredBy && period.enteredDate) { ?>
+                                            <span style="margin-left: 10px;">Last updated: <?= Utilities.formatDate(new Date(period.enteredDate), Session.getScriptTimeZone(), 'dd/MM/yyyy') ?> by <?= period.enteredBy ?></span>
+                                        <? } ?>
+                                    </div>
+                                    <? if (!period.dataComplete) { ?>
+                                        <button class="btn btn-primary" style="font-size: 11px;" onclick="editPeriod('<?= period.periodId ?>')">
+                                            ✏️ Edit Amounts
+                                        </button>
+                                    <? } ?>
+                                </div>
+                            </div>
+                        <? }); ?>
+                    </div>
+                <? }); ?>
+            </div>
+
+            <!-- Enhanced Actions Section -->
+            <div class="actions-section">
+                <? if (!periodData.case.actualReturnDate) { ?>
+                    <button class="btn btn-primary" onclick="showReturnDateModal()">📝 Set Return Date</button>
+                <? } ?>
+                <button class="btn btn-success" onclick="recalculateCMP()">🔄 Recalculate CMP</button>
+                <button class="btn btn-warning" onclick="showArchiveModal()">📦 Archive Case</button>
+                <button class="btn btn-primary" onclick="exportReport()">📄 Export Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Return Date Modal -->
+    <div id="returnDateModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <h3>📝 Set Actual Return Date</h3>
+            <p class="text-muted">Enter the date when <?= periodData.case.employeeName ?> actually returned to work.</p>
+            
+            <div class="form-group">
+                <label for="actualReturnDate">Actual Return Date:</label>
+                <input type="date" id="actualReturnDate" name="actualReturnDate" class="form-control" required>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="submitReturnDate()">Save Return Date</button>
+                <button class="btn" onclick="hideReturnDateModal()" style="background: #6c757d; color: white;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Archive Modal -->
+    <div id="archiveModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <h3>📦 Archive Case</h3>
+            <p class="text-muted">This will remove the case from the active dashboard. Please provide a reason for archiving.</p>
+            
+            <div class="form-group">
+                <label for="archiveReason">Reason for archiving:</label>
+                <input type="text" id="archiveReason" name="archiveReason" class="form-control" placeholder="e.g., Employee returned to work" required>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn btn-warning" onclick="submitArchive()">Archive Case</button>
+                <button class="btn" onclick="hideArchiveModal()" style="background: #6c757d; color: white;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ENHANCED: Store period data with proper type conversion and CMP tracking
+        const allPeriods = [
+            <? periodData.case.periods.forEach(function(period, index) { ?>
+                {
+                    periodNumber: parseInt(<?= period.periodNumber ?>) || 0,
+                    smpAmount: parseFloat(<?= parseFloat(period.smpAmount || 0) ?>) || 0,
+                    companyAmount: parseFloat(<?= parseFloat(period.companyAmount || 0) ?>) || 0,
+                    holidayAccrued: parseFloat(<?= parseFloat(period.holidayAccrued || 0) ?>) || 0,
+                    hasCMP: <?= (period.companyAmount || 0) > 0 ? 'true' : 'false' ?>
+                }<? if (index < periodData.case.periods.length - 1) { ?>,<? } ?>
+            <? }); ?>
+        ];
+        
+        const totalSMP = parseFloat(<?= parseFloat(periodData.displayData.totalSMP || 0) ?>) || 0;
+        const totalCMP = parseFloat(<?= parseFloat(periodData.displayData.totalCMP || 0) ?>) || 0;
+        const cmpDaysTotal = parseInt(<?= periodData.displayData.cmpDaysTotal || 56 ?>) || 56;
+        const cmpDaysUsed = parseInt(<?= periodData.displayData.cmpDaysUsed || 0 ?>) || 0;
+
+        // Enhanced progress calculation
+        function updateProgressRing() {
+            const totalPeriods = allPeriods.length;
+            const completedPeriods = allPeriods.filter(p => p.smpAmount > 0 || p.companyAmount > 0).length;
+            const percentage = totalPeriods > 0 ? (completedPeriods / totalPeriods) * 100 : 0;
+            
+            const circle = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 25;
+            const strokeDasharray = (percentage / 100) * circumference;
+            
+            if (circle) {
+                circle.style.strokeDasharray = `${strokeDasharray} ${circumference}`;
+            }
+            
+            const progressText = document.getElementById('progressText');
+            if (progressText) {
+                progressText.textContent = `${completedPeriods}/${totalPeriods} periods (${Math.round(percentage)}%)`;
+            }
+        }
+
+        // Safe number formatting
+        function formatCurrency(amount) {
+            const num = parseFloat(amount) || 0;
+            return num.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+
+        // ENHANCED: Calculate amounts before a specific period with CMP tracking
+        function calculateCumulativeAmounts(targetPeriodNumber) {
+            let cumulativeSMP = 0;
+            let cumulativeCMP = 0;
+            
+            const periodNum = parseInt(targetPeriodNumber);
+            if (isNaN(periodNum)) return { smpPaid: 0, cmpPaid: 0, smpRemaining: totalSMP, cmpRemaining: totalCMP };
+            
+            // Sum amounts for periods BEFORE the target period
+            allPeriods.forEach(period => {
+                if (period.periodNumber < periodNum) {
+                    cumulativeSMP += parseFloat(period.smpAmount) || 0;
+                    cumulativeCMP += parseFloat(period.companyAmount) || 0;
+                }
+            });
+            
+            return {
+                smpPaid: Math.round(cumulativeSMP * 100) / 100,
+                cmpPaid: Math.round(cumulativeCMP * 100) / 100,
+                smpRemaining: Math.round((totalSMP - cumulativeSMP) * 100) / 100,
+                cmpRemaining: Math.round((totalCMP - cumulativeCMP) * 100) / 100
+            };
+        }
+
+        // Enhanced display update with CMP tracking
+        function updateFinancialSummary(amounts, periodLabel) {
+            document.getElementById('financialPeriodLabel').textContent = periodLabel || '(All Periods)';
+            document.getElementById('smpPaid').textContent = formatCurrency(amounts.smpPaid);
+            document.getElementById('smpRemaining').textContent = formatCurrency(amounts.smpRemaining);
+            document.getElementById('cmpPaid').textContent = formatCurrency(amounts.cmpPaid);
+            
+            // Update CMP days tracking
+            const cmpDaysElement = document.getElementById('cmpDays');
+            if (cmpDaysElement) {
+                const cmpDaysUsedForPeriod = Math.round((amounts.cmpPaid / (parseFloat(<?= periodData.case.targetWeeklyAmount || 0 ?>) / 7)) || 0);
+                cmpDaysElement.textContent = `${cmpDaysUsedForPeriod}/${cmpDaysTotal}`;
+            }
+        }
+
+        // Enhanced tab switching with CMP context
+        function showPeriodTab(tabId, targetPeriodNumber, tabName) {
+            document.querySelectorAll('.period-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.period-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            
+            if (targetPeriodNumber) {
+                const amounts = calculateCumulativeAmounts(targetPeriodNumber);
+                updateFinancialSummary(amounts, `(Paid before ${tabName})`);
+            }
+        }
+
+        // Enhanced initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgressRing();
+            
+            const firstTab = document.querySelector('.period-tab.active');
+            if (firstTab && allPeriods.length > 0) {
+                const targetPeriod = parseInt(firstTab.getAttribute('data-period-number'));
+                const tabName = firstTab.getAttribute('data-tab-name');
+                if (targetPeriod) {
+                    const amounts = calculateCumulativeAmounts(targetPeriod);
+                    updateFinancialSummary(amounts, `(Paid before ${tabName})`);
+                }
+            }
+        });
+
+        // Enhanced modal functions
+        function showReturnDateModal() { document.getElementById('returnDateModal').style.display = 'flex'; }
+        function hideReturnDateModal() { document.getElementById('returnDateModal').style.display = 'none'; }
+        function showArchiveModal() { document.getElementById('archiveModal').style.display = 'flex'; }
+        function hideArchiveModal() { document.getElementById('archiveModal').style.display = 'none'; }
+        
+        function editPeriod(periodId) {
+            alert('Period editing functionality will be implemented in the next update');
+        }
+        
+        function recalculateCMP() {
+            if (confirm('Recalculate CMP amounts for this case? This will update all period CMP amounts based on current SMP data.')) {
+                google.script.run
+                    .withSuccessHandler(function(result) {
+                        if (result.success) {
+                            alert('CMP amounts recalculated successfully');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + result.message);
+                        }
+                    })
+                    .withFailureHandler(function(error) {
+                        alert('Error recalculating CMP: ' + error.message);
+                    })
+                    .recalculateCMPAmounts('<?= periodData.case.caseId ?>');
+            }
+        }
+        
+        function exportReport() { 
+            alert('Enhanced report export functionality will be implemented in the next update'); 
+        }
+        
+        function submitReturnDate() {
+            const returnDate = document.getElementById('actualReturnDate').value;
+            if (!returnDate) { alert('Please select a return date'); return; }
+            google.script.run.withSuccessHandler(function(result) {
+                if (result.success) { 
+                    alert('Return date saved successfully. Periods and CMP have been recalculated.'); 
+                    google.script.host.close(); 
+                    google.script.run.showMaternityDashboard(); 
+                }
+                else { alert('Error: ' + result.message); }
+            }).withFailureHandler(function(error) { alert('Error saving return date: ' + error.message); })
+            .submitReturnDate('<?= periodData.case.caseId ?>', returnDate);
+        }
+        
+        function submitArchive() {
+            const reason = document.getElementById('archiveReason').value.trim();
+            if (!reason) { alert('Please provide a reason for archiving'); return; }
+            if (confirm('Are you sure you want to archive this case?')) {
+                google.script.run.withSuccessHandler(function(result) {
+                    if (result.success) { 
+                        alert('Case archived successfully'); 
+                        google.script.host.close(); 
+                        google.script.run.showMaternityDashboard(); 
+                    }
+                    else { alert('Error: ' + result.message); }
+                }).withFailureHandler(function(error) { alert('Error archiving case: ' + error.message); })
+                .submitArchiveCase('<?= periodData.case.caseId ?>', reason);
+            }
+        }
+        
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal-overlay')) { event.target.style.display = 'none'; }
+        });
+        
+        // Enhanced keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        recalculateCMP();
+                        break;
+                    case 'e':
+                        e.preventDefault();
+                        exportReport();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
