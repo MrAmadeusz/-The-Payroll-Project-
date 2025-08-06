@@ -1,0 +1,67 @@
+/**
+ * ⚠️ DANGER: Deletes ALL maternity data
+ * Run this function in the Google Apps Script console to clear all test data
+ */
+function deleteAllMaternityData() {
+  try {
+    console.log('🗑️ Starting deletion of all maternity data...');
+    
+    // Get current count
+    const currentCases = getAllMaternityCases();
+    console.log(`📊 Found ${currentCases.length} maternity cases to delete`);
+    
+    // Clear all data by saving empty array
+    const result = saveMaternityCases([]);
+    
+    if (result.success) {
+      console.log('✅ SUCCESS: All maternity data deleted');
+      console.log('📋 Maternity data file is now empty');
+      return {
+        success: true,
+        message: `Deleted ${currentCases.length} maternity cases`,
+        deletedCount: currentCases.length
+      };
+    } else {
+      console.error('❌ FAILED to delete data:', result.error);
+      return {
+        success: false,
+        error: result.error
+      };
+    }
+    
+  } catch (error) {
+    console.error('❌ ERROR during deletion:', error.message);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Safer version - shows what will be deleted before doing it
+ */
+function previewMaternityDataDeletion() {
+  try {
+    const cases = getAllMaternityCases();
+    console.log('📋 MATERNITY DATA PREVIEW:');
+    console.log(`Total cases: ${cases.length}`);
+    
+    if (cases.length > 0) {
+      console.log('\nCases to be deleted:');
+      cases.forEach((c, index) => {
+        console.log(`${index + 1}. ${c.employeeName} (${c.caseId}) - Created: ${new Date(c.createdDate).toLocaleDateString()}`);
+      });
+      
+      console.log('\n⚠️ To delete all this data, run: deleteAllMaternityData()');
+    } else {
+      console.log('✅ No maternity data found - already clean!');
+    }
+    
+    return cases.length;
+    
+  } catch (error) {
+    console.error('❌ Error previewing data:', error.message);
+    return 0;
+  }
+}
