@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Submit Feature Request</title>
+    <style>
+        body {
+            font-family: 'Google Sans', Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f8f9fa;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #34a853, #4285f4);
+            color: white;
+            padding: 16px;
+            margin: -16px -16px 20px -16px;
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .header p {
+            margin: 8px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: #202124;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #3c4043;
+            margin-bottom: 6px;
+        }
+        
+        .required {
+            color: #ea4335;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-help {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 4px;
+        }
+        
+        .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        
+        .priority-option {
+            padding: 12px;
+            border: 2px solid #dadce0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .priority-option:hover {
+            border-color: #1a73e8;
+        }
+        
+        .priority-option.selected {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+        
+        .priority-option .priority-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .priority-option .priority-desc {
+            font-size: 11px;
+            color: #5f6368;
+        }
+        
+        .priority-high .priority-title { color: #ea4335; }
+        .priority-medium .priority-title { color: #f9ab00; }
+        .priority-low .priority-title { color: #34a853; }
+        
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+        
+        .category-option {
+            padding: 12px;
+            border: 2px solid #dadce0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: white;
+        }
+        
+        .category-option:hover {
+            border-color: #1a73e8;
+        }
+        
+        .category-option.selected {
+            border-color: #1a73e8;
+            background: #e8f0fe;
+        }
+        
+        .category-option .category-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .category-option .category-desc {
+            font-size: 11px;
+            color: #5f6368;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background: #1a73e8;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #1557b0;
+        }
+        
+        .btn-primary:disabled {
+            background: #dadce0;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+        }
+        
+        .btn-secondary:hover {
+            background: #e8eaed;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #5f6368;
+        }
+        
+        .error {
+            background: #fce8e6;
+            color: #d93025;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .success {
+            background: #e6f4ea;
+            color: #137333;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+        
+        .validation-error {
+            color: #ea4335;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        
+        .character-count {
+            font-size: 12px;
+            color: #5f6368;
+            text-align: right;
+            margin-top: 4px;
+        }
+        
+        .progress-indicator {
+            width: 100%;
+            height: 4px;
+            background: #e8eaed;
+            border-radius: 2px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4285f4, #34a853);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .tips {
+            background: #e8f0fe;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #1a73e8;
+        }
+        
+        .tips-title {
+            font-weight: 500;
+            color: #1a73e8;
+            margin-bottom: 8px;
+        }
+        
+        .tips ul {
+            margin: 0;
+            padding-left: 16px;
+            color: #3c4043;
+        }
+        
+        .tips li {
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        
+        .form-preview {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #dadce0;
+            margin-top: 16px;
+            display: none;
+        }
+        
+        .form-preview.visible {
+            display: block;
+        }
+        
+        .preview-title {
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #3c4043;
+        }
+        
+        .preview-item {
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        
+        .preview-label {
+            font-weight: 500;
+            color: #5f6368;
+        }
+        
+        .preview-value {
+            color: #202124;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>➕ Submit Feature Request</h1>
+        <p>Help us improve the HR/Payroll system by sharing your ideas</p>
+    </div>
+
+    <div class="progress-indicator">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div id="errorMessage" class="error" style="display: none;"></div>
+    <div id="successMessage" class="success" style="display: none;"></div>
+
+    <form id="requestForm">
+        <!-- Basic Information -->
+        <div class="form-section">
+            <div class="section-title">📝 Basic Information</div>
+            
+            <div class="form-group">
+                <label class="form-label" for="title">Request Title <span class="required">*</span></label>
+                <input type="text" id="title" name="title" required 
+                       placeholder="Brief, descriptive title for your feature request"
+                       oninput="updateProgress(); validateTitle()">
+                <div class="character-count">
+                    <span id="titleCount">0</span>/100 characters
+                </div>
+                <div id="titleError" class="validation-error"></div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="description">Detailed Description <span class="required">*</span></label>
+                <textarea id="description" name="description" required 
+                          placeholder="Describe what you'd like to see implemented, why it's needed, and how it would be used"
+                          oninput="updateProgress(); validateDescription()"></textarea>
+                <div class="character-count">
+                    <span id="descriptionCount">0</span>/1000 characters
+                </div>
+                <div id="descriptionError" class="validation-error"></div>
+                <div class="form-help">Be as specific as possible. Include examples if helpful.</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="submitter">Your Name <span class="required">*</span></label>
+                <input type="text" id="submitter" name="submitter" required 
+                       placeholder="Your name for follow-up questions"
+                       oninput="updateProgress()">
+            </div>
+        </div>
+
+        <!-- Category Selection -->
+        <div class="form-section">
+            <div class="section-title">📂 Category</div>
+            <div class="form-help" style="margin-bottom: 12px;">Select the type of request:</div>
+            
+            <div class="category-grid">
+                <div class="category-option" onclick="selectCategory('Enhancement')">
+                    <div class="category-title">🔧 Enhancement</div>
+                    <div class="category-desc">Improve existing features</div>
+                </div>
+                <div class="category-option" onclick="selectCategory('New Module')">
+                    <div class="category-title">🆕 New Module</div>
+                    <div class="category-desc">Entirely new functionality</div>
+                </div>
+                <div class="category-option" onclick="selectCategory('Bug Fix')">
+                    <div class="category-title">🐛 Bug Fix</div>
+                    <div class="category-desc">Fix something that's broken</div>
+                </div>
+                <div class="category-option" onclick="selectCategory('Reporting')">
+                    <div class="category-title">📊 Reporting</div>
+                    <div class="category-desc">New reports or analytics</div>
+                </div>
+                <div class="category-option" onclick="selectCategory('Integration')">
+                    <div class="category-title">🔗 Integration</div>
+                    <div class="category-desc">Connect with other systems</div>
+                </div>
+                <div class="category-option" onclick="selectCategory('Performance')">
+                    <div class="category-title">⚡ Performance</div>
+                    <div class="category-desc">Make things faster</div>
+                </div>
+            </div>
+            <input type="hidden" id="category" name="category" required>
+            <div id="categoryError" class="validation-error"></div>
+        </div>
+
+        <!-- Priority Selection -->
+        <div class="form-section">
+            <div class="section-title">🎯 Priority</div>
+            <div class="form-help" style="margin-bottom: 12px;">How urgent is this request?</div>
+            
+            <div class="priority-grid">
+                <div class="priority-option priority-high" onclick="selectPriority('High')">
+                    <div class="priority-title">High</div>
+                    <div class="priority-desc">Urgent, business critical</div>
+                </div>
+                <div class="priority-option priority-medium" onclick="selectPriority('Medium')">
+                    <div class="priority-title">Medium</div>
+                    <div class="priority-desc">Important, but not urgent</div>
+                </div>
+                <div class="priority-option priority-low" onclick="selectPriority('Low')">
+                    <div class="priority-title">Low</div>
+                    <div class="priority-desc">Nice to have</div>
+                </div>
+            </div>
+            <input type="hidden" id="priority" name="priority" required>
+            <div id="priorityError" class="validation-error"></div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="form-section">
+            <div class="section-title">📋 Additional Information</div>
+            
+            <div class="form-group">
+                <label class="form-label" for="businessJustification">Business Justification</label>
+                <textarea id="businessJustification" name="businessJustification" 
+                          placeholder="Why is this important for the business? What problems would it solve?"
+                          oninput="updateProgress()"></textarea>
+                <div class="form-help">Help us understand the business value and impact.</div>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="estimatedImpact">Estimated Impact</label>
+                <select id="estimatedImpact" name="estimatedImpact" onchange="updateProgress()">
+                    <option value="">Select impact level</option>
+                    <option value="High">High - Affects many users/processes</option>
+                    <option value="Medium">Medium - Affects some users/processes</option>
+                    <option value="Low">Low - Affects few users/processes</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="dependencies">Dependencies</label>
+                <textarea id="dependencies" name="dependencies" 
+                          placeholder="Any dependencies on other systems, modules, or external factors?"
+                          oninput="updateProgress()"></textarea>
+                <div class="form-help">List anything else that needs to be in place for this to work.</div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <div class="tips">
+            <div class="tips-title">💡 Tips for a Great Feature Request</div>
+            <ul>
+                <li>Be specific about what you want and why</li>
+                <li>Include examples or screenshots if helpful</li>
+                <li>Consider the impact on other users</li>
+                <li>Think about edge cases or potential issues</li>
+                <li>Mention any deadline constraints</li>
+            </ul>
+        </div>
+
+        <!-- Preview Section -->
+        <div id="formPreview" class="form-preview">
+            <div class="preview-title">📋 Request Preview</div>
+            <div id="previewContent"></div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="button-row">
+            <button type="button" class="btn-secondary" onclick="previewRequest()">👁️ Preview</button>
+            <button type="submit" class="btn-primary" id="submitBtn" disabled>🚀 Submit Request</button>
+        </div>
+    </form>
+
+    <div id="loadingIndicator" class="loading" style="display: none;">
+        Submitting your request...
+    </div>
+
+    <script>
+        let selectedCategory = '';
+        let selectedPriority = '';
+
+        // Initialize form
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('requestForm').addEventListener('submit', handleSubmit);
+            updateProgress();
+        });
+
+        function selectCategory(category) {
+            selectedCategory = category;
+            document.getElementById('category').value = category;
+            
+            // Update visual selection
+            document.querySelectorAll('.category-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            clearError('categoryError');
+            updateProgress();
+        }
+
+        function selectPriority(priority) {
+            selectedPriority = priority;
+            document.getElementById('priority').value = priority;
+            
+            // Update visual selection
+            document.querySelectorAll('.priority-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            clearError('priorityError');
+            updateProgress();
+        }
+
+        function validateTitle() {
+            const title = document.getElementById('title').value;
+            const titleCount = document.getElementById('titleCount');
+            const titleError = document.getElementById('titleError');
+            
+            titleCount.textContent = title.length;
+            
+            if (title.length < 5) {
+                showFieldError('titleError', 'Title must be at least 5 characters');
+                return false;
+            } else if (title.length > 100) {
+                showFieldError('titleError', 'Title must be less than 100 characters');
+                return false;
+            } else {
+                clearError('titleError');
+                return true;
+            }
+        }
+
+        function validateDescription() {
+            const description = document.getElementById('description').value;
+            const descriptionCount = document.getElementById('descriptionCount');
+            
+            descriptionCount.textContent = description.length;
+            
+            if (description.length < 20) {
+                showFieldError('descriptionError', 'Description must be at least 20 characters');
+                return false;
+            } else if (description.length > 1000) {
+                showFieldError('descriptionError', 'Description must be less than 1000 characters');
+                return false;
+            } else {
+                clearError('descriptionError');
+                return true;
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            
+            // Validate title
+            if (!validateTitle()) isValid = false;
+            
+            // Validate description
+            if (!validateDescription()) isValid = false;
+            
+            // Validate submitter
+            const submitter = document.getElementById('submitter').value.trim();
+            if (!submitter) {
+                showFieldError('submitterError', 'Your name is required');
+                isValid = false;
+            }
+            
+            // Validate category
+            if (!selectedCategory) {
+                showFieldError('categoryError', 'Please select a category');
+                isValid = false;
+            }
+            
+            // Validate priority
+            if (!selectedPriority) {
+                showFieldError('priorityError', 'Please select a priority');
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+
+        function updateProgress() {
+            const requiredFields = ['title', 'description', 'submitter'];
+            const totalSteps = requiredFields.length + 2; // +2 for category and priority
+            let completedSteps = 0;
+            
+            // Check required text fields
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field.value.trim().length > 0) {
+                    completedSteps++;
+                }
+            });
+            
+            // Check category and priority
+            if (selectedCategory) completedSteps++;
+            if (selectedPriority) completedSteps++;
+            
+            const progress = (completedSteps / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            // Enable submit button when all required fields are complete
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = completedSteps < totalSteps;
+        }
+
+        function previewRequest() {
+            const formData = getFormData();
+            const previewDiv = document.getElementById('formPreview');
+            const previewContent = document.getElementById('previewContent');
+            
+            previewContent.innerHTML = `
+                <div class="preview-item">
+                    <span class="preview-label">Title:</span> 
+                    <span class="preview-value">${formData.title || '[Not provided]'}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Category:</span> 
+                    <span class="preview-value">${formData.category || '[Not selected]'}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Priority:</span> 
+                    <span class="preview-value">${formData.priority || '[Not selected]'}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Submitter:</span> 
+                    <span class="preview-value">${formData.submitter || '[Not provided]'}</span>
+                </div>
+                <div class="preview-item">
+                    <span class="preview-label">Description:</span> 
+                    <div class="preview-value" style="margin-top: 4px; white-space: pre-wrap;">${formData.description || '[Not provided]'}</div>
+                </div>
+                ${formData.businessJustification ? `
+                <div class="preview-item">
+                    <span class="preview-label">Business Justification:</span> 
+                    <div class="preview-value" style="margin-top: 4px; white-space: pre-wrap;">${formData.businessJustification}</div>
+                </div>
+                ` : ''}
+                ${formData.dependencies ? `
+                <div class="preview-item">
+                    <span class="preview-label">Dependencies:</span> 
+                    <div class="preview-value" style="margin-top: 4px; white-space: pre-wrap;">${formData.dependencies}</div>
+                </div>
+                ` : ''}
+            `;
+            
+            previewDiv.classList.add('visible');
+            previewDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function getFormData() {
+            return {
+                title: document.getElementById('title').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                submitter: document.getElementById('submitter').value.trim(),
+                category: selectedCategory,
+                priority: selectedPriority,
+                businessJustification: document.getElementById('businessJustification').value.trim(),
+                estimatedImpact: document.getElementById('estimatedImpact').value,
+                dependencies: document.getElementById('dependencies').value.trim()
+            };
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            if (!validateForm()) {
+                showError('Please fix the highlighted errors before submitting');
+                return;
+            }
+            
+            try {
+                const formData = getFormData();
+                
+                showLoading(true);
+                hideMessages();
+                
+                const result = await callServerFunction('createFeatureRequestForUI', formData);
+                
+                if (result && result.success) {
+                    showSuccess(`Request ${result.requestId} submitted successfully! You can track its progress in the dashboard.`);
+                    resetForm();
+                } else {
+                    showError('Failed to submit request: ' + (result?.error || 'Unknown error'));
+                }
+                
+            } catch (error) {
+                showError('Submission failed: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('requestForm').reset();
+            selectedCategory = '';
+            selectedPriority = '';
+            
+            // Clear visual selections
+            document.querySelectorAll('.category-option, .priority-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Clear character counts
+            document.getElementById('titleCount').textContent = '0';
+            document.getElementById('descriptionCount').textContent = '0';
+            
+            // Hide preview
+            document.getElementById('formPreview').classList.remove('visible');
+            
+            // Clear errors
+            document.querySelectorAll('.validation-error').forEach(error => {
+                error.textContent = '';
+            });
+            
+            updateProgress();
+        }
+
+        // Utility functions
+        function showFieldError(elementId, message) {
+            document.getElementById(elementId).textContent = message;
+        }
+
+        function clearError(elementId) {
+            document.getElementById(elementId).textContent = '';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+            document.getElementById('requestForm').style.display = show ? 'none' : 'block';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            errorDiv.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => errorDiv.style.display = 'none', 8000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            successDiv.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => successDiv.style.display = 'none', 10000);
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function callServerFunction(functionName, ...args) {
+            return new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler(resolve)
+                    .withFailureHandler(reject)
+                    [functionName](...args);
+            });
+        }
+    </script>
+</body>
+</html>
