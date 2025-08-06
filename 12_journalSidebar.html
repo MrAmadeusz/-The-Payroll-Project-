@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 10px; }
+    label { display: block; margin-top: 12px; }
+    select, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    button {
+      border: none;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .secondary-btn {
+      background-color: #e0e0e0;
+      color: #333;
+    }
+    .secondary-btn:hover {
+      background-color: #d5d5d5;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 13px;
+    }
+    .info-text {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h3>📤 Export Payroll Journal</h3>
+
+  <label for="journalType">Choose Journal Types:</label>
+  <select id="journalType" multiple size="7">
+    <option value="investment">Investment</option>
+    <option value="hourly">Hourly</option>
+    <option value="salaried">Salaried</option>
+    <option value="hourlyAccrual">Hourly Accrual</option>
+    <option value="crossCharge">Cross Charge</option>
+    <option value="apLevy">AP Levy</option>
+    <option value="ptClasses">PT/Classes Separation</option>
+  </select>
+  <div class="info-text">
+    💡 PT/Classes Separation creates 3 files: adjusted hourly, adjusted salaried, and combined PT/Classes journal
+  </div>
+
+  <label for="month">Payroll Month:</label>
+  <select id="month">
+    <option value="April 2025">April 2025</option>
+    <option value="May 2025">May 2025</option>
+    <option value="June 2025">June 2025</option>
+    <option value="July 2025">July 2025</option>
+    <option value="August 2025">August 2025</option>
+    <option value="September 2025">September 2025</option>
+    <option value="October 2025">October 2025</option>
+    <option value="November 2025">November 2025</option>
+    <option value="December 2025">December 2025</option>
+    <option value="January 2026">January 2026</option>
+    <option value="February 2026">February 2026</option>
+    <option value="March 2026">March 2026</option>
+  </select>
+
+  <button onclick="runExport()">🚀 Generate & Export</button>
+  <button class="secondary-btn" onclick="google.script.host.close()">❌ Close</button>
+
+  <div id="status"></div>
+
+  <script>
+    function runExport() {
+      const select = document.getElementById("journalType");
+      const selectedJournals = Array.from(select.selectedOptions).map(opt => opt.value.trim());
+
+      if (selectedJournals.length === 0) {
+        alert("Please select at least one journal type.");
+        return;
+      }
+
+      const selectedMonth = document.getElementById("month").value;
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerText = "⏳ Working...";
+      document.getElementById('status').innerHTML = '';
+
+      google.script.run
+        .withSuccessHandler(function(msg) {
+          btn.disabled = false;
+          btn.innerText = "🚀 Generate & Export";
+          document.getElementById('status').innerHTML =
+            `<span style="color: green; white-space: pre-line;">✅ ${msg}</span>`;
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerText = "🚀 Generate & Export";
+          document.getElementById('status').innerHTML =
+            `<span style="color: red;">❌ ${err.message}</span>`;
+        })
+        .runMultiJournalExport(selectedJournals, selectedMonth);
+    }
+  </script>
+</body>
+</html>
