@@ -1,0 +1,121 @@
+/**
+ * 08_leaversReport.gs
+ * Production-ready Leavers Report using shared Google Sheets audit trail system
+ * Mirrors the starters report logic exactly but for employees leaving
+ */
+
+/**
+ * Checks if a leaver has already been reported for a DIFFERENT date range
+ * Uses optimized search for large datasets - mirrors starters logic
+ */
+function isLeaverAlreadyReportedElsewhere(employeeNo, auditTrail, currentDateRange) {
+  const currentDateRangeKey = `${Utilities.formatDate(currentDateRange.startDate, Session.getScriptTimeZone(), 'yyyy-MM-dd')}_${Utilities.formatDate(currentDateRange.endDate, Session.getScriptTimeZone(), 'yyyy-MM-dd')}`;
+  
+  return auditTrail.some(record => 
+    record.employeeNo === employeeNo && 
+    record.reportType === 'LEAVER' &&
+    record.dateRangeKey !== currentDateRangeKey
+  );
+}
+
+/**
+ * Hybrid generateLeaversReport function - mirrors starters logic exactly
+ * @param {Array} data - Employee data array
+ * @param {Object} options - Options object (can contain dateRange, lookbackDays)
+ * @returns {Array} 2D array with report data
+ */
+function generateLeaversReport(data, options = {}) {
+  try {
+    const dateRange = options.dateRange || promptForDateRange("Select Date Range for Leavers Report");
+    const auditTrail = loadLeaversAuditTrail();
+    
+    // PART 1: Original logic - people who left in date range
+    const normalLeavers = data.filter(emp => {
+      // Try multiple possible field names for end date
+      const endDate = (emp.EndDate || emp.LeavingDate || emp.TerminationDate || emp.LastWorkingDate)?.trim();
+      return endDate && isDateInRange(endDate, dateRange);
+    }).filter(emp => 
+      !isLeaverAlreadyReportedElsewhere(emp.EmployeeNumber, auditTrail, dateRange)
+    );
+    
+    // PART 2: Late additions - people who left before range but never reported
+    const lookbackDays = options.lookbackDays || 60;
+    const lookbackDate = new Date(dateRange.startDate);
+    lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
+    
+    const lateAdditions = data.filter(emp => {
+      // Try multiple possible field names for end date
+      const endDate = (emp.EndDate || emp.LeavingDate || emp.TerminationDate || emp.LastWorkingDate)?.trim();
+      if (!endDate) return false;
+      
+      const parsedEndDate = parseDMY(endDate);
+      if (!parsedEndDate) return false;
+      
+      // Must have left before report range but after lookback date
+      const leftBeforeRange = parsedEndDate < dateRange.startDate;
+      const withinLookback = parsedEndDate >= lookbackDate;
+      
+      // Must never have been reported (not in audit trail at all)
+      const neverReported = !auditTrail.some(record => record.employeeNo === emp.EmployeeNumber);
+      
+      return leftBeforeRange && withinLookback && neverReported;
+    });
+    
+    // Combine both groups
+    const allNewLeavers = [...normalLeavers, ...lateAdditions];
+    
+    // Remove duplicates (in case someone appears in both lists)
+    const uniqueLeavers = allNewLeavers.filter((emp, index, arr) => 
+      arr.findIndex(e => e.EmployeeNumber === emp.EmployeeNumber) === index
+    );
+    
+    // Sort by end date
+    uniqueLeavers.sort((a, b) => {
+      const dateA = parseDMY(a.EndDate || a.LeavingDate || a.TerminationDate || a.LastWorkingDate);
+      const dateB = parseDMY(b.EndDate || b.LeavingDate || b.TerminationDate || b.LastWorkingDate);
+      return dateA - dateB;
+    });
+    
+    // Build report - mirroring starters column structure but adapted for leavers
+    const header = [
+      'Employee No', 'Name', 'Email Address', 'Hotel (Unit)', 'Department', 
+      'Contracted Hours', 'Start Date', 'End Date', 'Date of Birth', 'Phone Number'
+    ];
+    
+    const rows = uniqueLeavers.map(emp => [
+      emp.EmployeeNumber || '',
+      `${emp.Firstnames || ''} ${emp.Surname || ''}`.trim(),
+      emp.EmailAddress || emp.Email || '',
+      emp.Location || emp.Hotel || emp.Unit || '',
+      emp.Department || emp.Division || '',
+      emp.ContractedHours || emp.Hours || '',
+      emp.ContinuousServiceStartDate || emp.StartDate || '',
+      emp.EndDate || emp.LeavingDate || emp.TerminationDate || emp.LastWorkingDate || '',
+      emp.DateOfBirth || emp.DOB || '',
+      emp.MobileTel || emp.PhoneNumber || emp.Phone || emp.MobileNumber || ''
+    ]);
+    
+    // Update audit trail with new leavers
+    if (uniqueLeavers.length > 0) {
+      updateLeaversAuditTrail(uniqueLeavers, dateRange);
+    }
+    
+    // Build summary with breakdown - mirrors starters format exactly
+    const rangeDisplay = formatDateRangeForDisplay(dateRange);
+    const titleRow = ['WEEKLY LEAVERS REPORT', rangeDisplay, '', '', '', '', '', '', '', ''];
+    
+    let summaryText = `${uniqueLeavers.length} new leavers to report`;
+    if (lateAdditions.length > 0) {
+      summaryText += ` (${normalLeavers.length} in period, ${lateAdditions.length} late additions)`;
+    }
+    
+    const summaryRow = ['SUMMARY', summaryText, '', '', '', '', '', '', '', ''];
+    const blankRow = ['', '', '', '', '', '', '', '', '', ''];
+    
+    return [titleRow, summaryRow, blankRow, header, ...rows];
+    
+  } catch (error) {
+    console.error(`Error generating leavers report: ${error.message}`);
+    throw new Error('Failed to generate leavers report: ' + error.message);
+  }
+}
